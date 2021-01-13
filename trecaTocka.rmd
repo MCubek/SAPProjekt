@@ -1,0 +1,207 @@
+---
+title: "Projekt"
+author: "Matej Čubek"
+date: "17/12/2020"
+output:
+html_document:
+df_print: paged
+pdf_document: default
+subtitle: 'Analiza uspješnosti većih naspram manjih fondova (veća imovina pod upravljanje naspram manja).'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Učitavanje paketa.
+```{r echo=T, error=FALSE, warning=FALSE, message=FALSE}
+library(dplyr)
+```
+
+Učitavanje podataka.
+```{r}
+mutual_funds <- read.csv("./Dataset/mutual_funds.csv")
+dim(mutual_funds)
+```
+
+Ispis svih atributa.
+```{r}
+names(mutual_funds)
+```
+
+Selekcija atributa bitnih za ovu analizu.
+Imovina pod upravljanje je atribut net_assets.
+```{r}
+mutual_funds <- select(mutual_funds, c("fund_name", "net_assets", "category", "net_annual_expense_ratio_fund", "net_annual_expense_ratio_category", "fund_return_10years", "category_return_10years", "morningstar_rating"))
+dim(mutual_funds)
+```
+
+```{r}
+summary(mutual_funds)
+
+sapply(mutual_funds, class)
+```
+
+Pretvoriti morningstar rating u kategorijsku varijablu iz integera.
+Ispisati sve fondove sa morningstar ratingom od 0.
+Izbaciti sve fondove sa morningstar ratingom od 0.
+```{r}
+mutual_funds$morningstar_rating <- as.factor(mutual_funds$morningstar_rating)
+mutual_funds[mutual_funds$morningstar_rating == 0,]
+mutual_funds <- subset(mutual_funds, mutual_funds$morningstar_rating != 0)
+```
+Ispisati sve fondove bez net_assets vrijednosti i ukloniti ih iz dataseta.
+Net_assets nam treba za odredivajne velicine fonda.
+```{r}
+mutual_funds[is.na(mutual_funds$net_assets),]
+mutual_funds <- subset(mutual_funds, !is.na(mutual_funds$net_assets))
+```
+
+Tražimo nepoznate podatke
+```{r}
+imaNedostajucih <- 0
+for (col_name in names(mutual_funds)) {
+  if (sum(is.na(mutual_funds[, col_name])) > 0) {
+    cat('Ukupno nedostajućih vrijednosti za varijablu ', col_name, ': ', sum(is.na(mutual_funds[, col_name])), '\n')
+    imaNedostajucih <- 1
+  }
+}
+
+if (!imaNedostajucih) {
+  cat("Nema nedostajucih podataka")
+}
+
+cat('\nDimenzija podataka: ', dim(mutual_funds))
+```
+Pregled podataka podataka.
+```{r, fig.width = 14, fig.height=5}
+hist(mutual_funds$net_annual_expense_ratio_fund, main = 'Net annual expense ratio fund[%]', xlab = 'Expense ratio', ylab = 'Frequency')
+hist(mutual_funds$net_annual_expense_ratio_category, main = 'Net annual expense ratio of category[%]', xlab = 'Expense ratio', ylab = 'Frequency')
+hist(mutual_funds$fund_return_10years, main = 'Fund return in 10 years[%]', xlab = 'Return', ylab = 'Frequency')
+hist(mutual_funds$category_return_10years, main = 'Category return in 10 years[%]', xlab = 'Return', ylab = 'Frequency')
+
+mutual_funds <- mutual_funds %>% mutate(success = fund_return_10years - category_return_10years)
+
+hist(mutual_funds$success, main = 'Rate of success[%]', xlab = 'Success', ylab = 'Frequency', breaks = 20)
+dim(mutual_funds)
+```
+
+Provjerimo kategorijski podatak morningstar rating.
+```{r, fig.width = 14, fig.height=5}
+barplot(summary(mutual_funds$morningstar_rating),main='Morningstar rating')
+```
+
+Podjela na velike i male fondove
+
+```{r, fig.width = 14, fig.height=5}
+median <- median(mutual_funds$net_assets)
+mutual_funds_large <- mutual_funds[mutual_funds$net_assets > median,]
+mutual_funds_small <- mutual_funds[mutual_funds$net_assets <= median,]
+summary(mutual_funds_large)
+cat("\n")
+summary(mutual_funds_small)
+```
+
+Jesu li veći fondovi uspješniji od manjih?
+```{r}
+cat('Prosječni uspjeh većih fondova iznosi  ', mean(mutual_funds_large$success),'\n')
+cat('Prosječni uspjeh manjih fondova iznosi  ', mean(mutual_funds_small$success),'\n')
+require(modeest)
+cat('Prosječni rating većih fondova iznosi  ', mfv(mutual_funds_large$morningstar_rating),'\n')
+cat('Prosječni rating manjih fondova iznosi  ', mfv(mutual_funds_small$morningstar_rating),'\n')
+```
+
+```{r}
+boxplot(mutual_funds_large$success, mutual_funds_small$success,
+        names = c('Large fund success','Small fund success'),
+        main='Boxplot of large and small fund success rate')
+```
+
+```{r}
+hist(mutual_funds_large$success,
+     breaks = 20,
+     main='Histogram of rate of success of large funds',
+     xlab='Success rate')
+
+hist(mutual_funds_small$success,
+     main='Histogram of rate of success of small funds',
+     xlab='Success rate')
+```
+
+```{r}
+qqnorm(mutual_funds_large$success, pch = 1, frame = FALSE,main='Large funds')
+qqline(mutual_funds_large$success, col = "steelblue", lwd = 2)
+
+qqnorm(mutual_funds_small$success, pch = 1, frame = FALSE,main='Small funds')
+qqline(mutual_funds_small$success, col = "steelblue", lwd = 2)
+```
+Zbog velike količine podataka pretpostavljamo normalnost?
+
+Varijance
+```{r}
+var(mutual_funds_large$success)
+var(mutual_funds_small$success)
+```
+
+Usporedba jednakosti varijanci
+```{r}
+var.test(mutual_funds_large$success, mutual_funds_small$success)
+```
+
+P vrijednost pokazuje da odbacujemo pretpostavku H0 da su varijance jednake.
+
+Koristimo t test.
+```{r}
+t.test(mutual_funds_small$success, mutual_funds_large$success, alt = "greater", var.equal = FALSE)
+```
+
+Ne možemo reći da su manji uspješniji od velikih fondova.
+
+
+Usporedba po morningstar ratingu.
+
+```{r}
+levels(mutual_funds$morningstar_rating)
+table(mutual_funds$morningstar_rating)
+```
+```{r}
+table(mutual_funds_large$morningstar_rating)
+table(mutual_funds_small$morningstar_rating)
+```
+
+```{r, fig.width = 14, fig.height=5}
+barplot(summary(mutual_funds_large$morningstar_rating),main='Morningstar rating for large funds')
+barplot(summary(mutual_funds_small$morningstar_rating),main='Morningstar rating for small funds')
+```
+
+
+```{r}
+large_rating <- table(mutual_funds_large$morningstar_rating)
+small_rating <-table(mutual_funds_small$morningstar_rating)
+round(prop.table(large_rating),digits=2)
+round(prop.table(small_rating),digits=2)
+```
+```{r, fig.width = 14, fig.height=5}
+barplot(prop.table(large_rating), xlab='Rating',ylab='Frequency',main="Morningstar rating distribution of large funds",ylim=range(pretty(c(0,prop.table(large_rating)))))
+
+barplot(prop.table(small_rating), xlab='Rating',ylab='Frequency',main="Morningstar rating distribution of small funds",ylim=range(pretty(c(0,prop.table(small_rating)))))
+```
+
+Test proporcija
+```{r}
+large_high_ratings <- large_rating[["4"]][1] + large_rating[["5"]][1]
+large_collective <- large_rating[["1"]][1] + large_rating[["2"]][1] + large_rating[["3"]][1] + large_rating[["4"]][1] + large_rating[["5"]][1]
+large_high_ratings
+large_collective
+
+small_high_ratings <- small_rating[["4"]][1] + small_rating[["5"]][1]
+small_collective <- small_rating[["1"]][1] + small_rating[["2"]][1] + small_rating[["3"]][1] + small_rating[["4"]][1] + small_rating[["5"]][1]
+small_high_ratings
+small_collective
+
+rating_proportions <- c(small_high_ratings,large_high_ratings)
+rating_sum <- c(small_collective,large_collective)
+prop.test(rating_proportions,rating_sum, alt="greater")
+```
+
+Ne odbacujemo H0, da su jednake proporcije visoko rangiranih fondova kod skupljih i jeftinijih fonfova.
