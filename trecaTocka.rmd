@@ -152,10 +152,10 @@ P vrijednost pokazuje da odbacujemo pretpostavku H0 da su varijance jednake.
 
 Koristimo t test.
 ```{r}
-t.test(mutual_funds_small$success, mutual_funds_large$success, alt = "greater", var.equal = FALSE)
+t.test(mutual_funds_large$success, mutual_funds_small$success, alt = "greater", var.equal = FALSE)
 ```
 
-Ne možemo reći da su manji uspješniji od velikih fondova.
+Moćemo reći da su veći fondovi prosječno uspješniji.
 
 
 Usporedba po morningstar ratingu.
@@ -199,9 +199,10 @@ small_collective <- small_rating[["1"]][1] + small_rating[["2"]][1] + small_rati
 small_high_ratings
 small_collective
 
-rating_proportions <- c(small_high_ratings,large_high_ratings)
-rating_sum <- c(small_collective,large_collective)
+rating_proportions <- c(large_high_ratings,small_high_ratings)
+rating_sum <- c(large_collective,small_collective)
 prop.test(rating_proportions,rating_sum, alt="greater")
 ```
 
-Ne odbacujemo H0, da su jednake proporcije visoko rangiranih fondova kod skupljih i jeftinijih fonfova.
+Odbacujemo H0, hipotezu da su proporcije visoko rangiranih jednake kod većih i manjih fondova.
+Veći fondovi imaju veću proporciju visoko rangiranih fondova nego mali.
