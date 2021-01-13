@@ -37,3 +37,13 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+/.idea/.gitignore
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/rGraphicsSettings.xml
+/.idea/rMarkdownGraphicsSettings.xml
+/.idea/rSettings.xml
+/.idea/SAP.iml
+/.idea/vcs.xml
