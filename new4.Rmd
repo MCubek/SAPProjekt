@@ -1,0 +1,345 @@
+---
+title: "Zad 4"
+output: html_notebook
+---
+
+## 4 Analiza kategorija
+
+### 4.1 Učitavanje i pregled podata
+
+Učitajmo podatke i prikažimo dataset.
+```{r}
+mutual_funds = read.csv("mutual_funds.csv")
+head(mutual_funds)
+```
+
+Pogledajmo sve kategorije:
+```{r}
+levels(mutual_funds$category)
+```
+Pogledajmo frekvenciju za svaku kategoriju.
+
+```{r}
+#library(dplyr)
+
+cats = table(mutual_funds$category)
+cats = as.data.frame(cats)
+cats
+
+library(ggplot2)
+
+ggplot(mutual_funds, aes(category)) + geom_bar(fill = "#0073C2FF") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+Pogledajmo prosjecnu vrijednost povrata fondova naspram kategorije kojoj oni pripadaju za povrat od 10 godina.
+```{r}
+cat_ytd = do.call(data.frame, aggregate(cbind(fund_return_10years, category_return_10years)~category, mutual_funds, FUN = function(x) c(Mean = mean(x))))
+
+plot(cat_ytd$fund_return_10years,type = "o",col = "blue", xlab = "Kategorije", ylab = "Povrat", 
+   main = "")
+
+lines(cat_ytd$category_return_10years, type = "o", col = "red")
+
+legend(x = "topleft", y=0.85, legend = c("Fondovi", "Kategorije"), col = c("blue", "red"), pch=c("-","-"))
+
+```
+
+Promotrimo kako se ponašaju podaci unutar nekih od kategorija. Kako bi imali što bolju reprezentaciju, promatraćemo kategoije sa najviše fondova "Large Growth", "Large Value", "Mid-Cap Growth", "Small Blend" i "Small Growth".
+
+```{r}
+
+cats = c("Large Growth", "Large Value", "Mid-Cap Growth", "Small Blend", "Small Growth")
+
+boxplot(mutual_funds[mutual_funds$category == "Large Growth",]$fund_return_10years, boxfill = NA, border = NA,  main='Povrat fondova 10 godina', names=c(""))
+
+i = 1
+for (c in cats) {
+  jedna = mutual_funds[mutual_funds$category == c, ]
+  
+  boxplot(jedna$fund_return_10years,
+          xaxt = "n", add = TRUE, boxfill="#0073C2FF", xlab="",
+          boxwex=0.3, at= i * 0.2 + 0.4)
+  mtext(c, side = 1, at= i * 0.2 + 0.4)
+  
+  i = i + 1
+}
+
+for (c in cats) {
+  jedna = mutual_funds[mutual_funds$category == c, ]
+  h = hist(jedna$fund_return_10years,
+         breaks=50,
+         main=c,
+         xlab="Povrat",
+         ylab='Frequency',
+         col="#0073C2FF"
+         ) 
+}
+```
+Pogledajmo normalnost na istim kategorijama.
+
+```{r}
+for (c in cats) {
+  jedna = mutual_funds[mutual_funds$category == c, ]
+  
+  qqnorm(jedna$fund_return_10years, pch = 1, frame = FALSE,main=c)
+  qqline(jedna$fund_return_10years, col = "steelblue", lwd = 2)
+}
+```
+
+Prije nego sto nastavimo rjesimo se kategorija sa malim frekvencijama
+
+```{r}
+cats = table(mutual_funds$category)
+cats = as.data.frame(cats)
+to_remove = cats[cats$Freq < 30,]
+cats = cats[cats$Freq >= 30,]
+cats
+
+library(dplyr)
+cat_funds = mutual_funds
+
+for (c in to_remove$Var1) {
+  cat_funds = cat_funds[cat_funds$category != c, ]
+}
+```
+
+Pogledajmo u kojim kategorijama fondovi najvise pobjedjuj.
+
+$H_0$ fondovi ne pobjedjuju kategorije.
+
+```{r}
+testovi = data.frame()
+
+for (c in unique(cat_funds$category)) {
+  d = cat_funds[cat_funds$category == c, ]
+  
+  y10 = t.test(d$fund_return_10years, mu = mean(d$category_return_10years), alternative="greater")$p.value
+  
+  row = data.frame(category=c, p10years=y10)
+  
+  testovi = rbind(testovi, row)
+}
+
+testovi
+
+y10t = testovi[testovi$p10years < 0.05,]
+
+p = nrow(y10t) / nrow(testovi)
+cat("Procenat fondova koji pobjedjuju kategoriju", p)
+```
+Analizirali smo svaku kategoriju zasebni i dobili smo da u 12.5% fondovi pobjedjuju svoju kategoriju
+
+## Usporedba fondova koji pobjedjuju katergoiju nasprem onih koji to ne uspijevaju
+
+Podijeliti cemo fondove u dvije kategorije, one koji pobjedjuju svoju kategoiju i one koji to ne uspijevaju za povrate u 10 godina
+
+Sada cemo analizirati fondove koji pobjedjuju kategorije.
+
+```{r}
+manji = cat_funds[cat_funds$fund_return_10years < cat_funds$category_return_10years, ]
+veci = cat_funds[cat_funds$fund_return_10years > cat_funds$category_return_10years, ]
+dim(manji)
+dim(veci)
+```
+
+```{r}
+cats = table(veci$category)
+cats = as.data.frame(cats)
+cats
+
+ggplot(veci, aes(category)) + geom_bar(fill = "#0073C2FF") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+cats = table(manji$category)
+cats = as.data.frame(cats)
+cats
+
+ggplot(manji, aes(category)) + geom_bar(fill = "#0073C2FF") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+```{r}
+veci = select(veci, c("category", "net_assets", "fund_yield", "morningstar_rating", "inception_date", "investment", "size", "currency", "portfolio_cash", "portfolio_stocks", "portfolio_preferred", "fund_return_10years", "category_return_10years"))
+manji = select(manji, c("category", "net_assets", "fund_yield", "morningstar_rating", "inception_date", "investment", "size", "currency", "portfolio_cash", "portfolio_stocks", "portfolio_preferred", "fund_return_10years", "category_return_10years"))
+
+veci$relative_return = (veci$fund_return_10years - veci$category_return_10years)
+manji$relative_return = (manji$fund_return_10years - manji$category_return_10years)
+
+summary(veci)
+summary(manji)
+```
+
+```{r}
+h = hist(veci$relative_return,
+         breaks=100,
+         main="Povrati iz svih fondova koji pobjedjuju svoju kategoriju",
+         xlab="povrat",
+         ylab='Frequency',
+         col="#0073C2FF"
+         )
+
+qqnorm(veci$relative_return, pch = 1, frame = FALSE,main="Povrati iz svih fondova koji pobjedjuju svoju kategoriju")
+qqline(veci$relative_return, col = "steelblue", lwd = 2)
+
+h = hist(manji$relative_return,
+         breaks=100,
+         main="Povrati iz svih fondova koji ne pobjedjuju svoju kategoriju",
+         xlab="povrat",
+         ylab='Frequency',
+         col="#0073C2FF"
+         )
+
+qqnorm(manji$relative_return, pch = 1, frame = FALSE,main="Povrati iz svih fondova koji ne pobjedjuju svoju kategoriju")
+qqline(manji$relative_return, col = "steelblue", lwd = 2)
+
+boxplot(veci$relative_return, manji$relative_return, 
+        names = c('Pobjedjuju','Ne pobjedjuju'),
+        col = "#0073C2FF",
+        main='Boxplot fondova zavisno da li pobjedjuju ili ne svoju kategoriju')
+```
+
+Pregled morningstar ratinga izmedju fondova koji pobjedjuju i ne pobjedjuju svoju kategoriju.
+
+```{r}
+h = hist(veci$morningstar_rating,
+         breaks=seq(min(veci$morningstar_rating)-1,max(veci$morningstar_rating),1),
+         main="Morningstar rating iz svih fondova koji pobjedjuju svoju kategoriju",
+         xlab="povrat",
+         ylab='Frequency',
+         col="#0073C2FF"
+         )
+
+h = hist(manji$morningstar_rating,
+         breaks=seq(min(manji$morningstar_rating)-1,max(manji$morningstar_rating),1),
+         main="Morningstar rating iz svih fondova koji ne pobjedjuju svoju kategoriju",
+         xlab="povrat",
+         ylab='Frequency',
+         col="#0073C2FF"
+         )
+```
+
+```{r}
+t.test(veci$morningstar_rating, manji$morningstar_rating, alt = "greater")
+```
+Vidimo da fondovi koji pobjedjuju imaju veci morningstar rating.
+
+Testirajmo da li odabrana strategija ima utjecaj da li ce fond biti uspijesan.
+
+```{r}
+veci['investment'] <- sapply(veci['investment'], as.character);
+manji['investment'] <- sapply(manji['investment'], as.character);
+
+veci_invest = table(veci[veci$investment=="Blend" | veci$investment=="Growth" | veci$investment=="Value",]$investment)
+manj_invest = table(manji[manji$investment=="Blend" | manji$investment=="Growth" | manji$investment=="Value",]$investment)
+tbl = rbind(veci_invest, manj_invest)
+
+added_margins_tbl = addmargins(tbl)
+print(added_margins_tbl)
+```
+
+```{r}
+for (col_names in colnames(added_margins_tbl)){
+  for (row_names in rownames(added_margins_tbl)){
+    if (!(row_names == 'Sum' | col_names == 'Sum') ){
+      cat('Očekivane frekvencije za razred ',col_names,'-',row_names,': ',(added_margins_tbl[row_names,'Sum'] * added_margins_tbl['Sum',col_names]) / added_margins_tbl['Sum','Sum'],'\n')
+    }
+  }
+}
+```
+```{r}
+chisq.test(tbl,correct=F)
+```
+Vidimo da nam odabrana strategija govori koja fond pobjedjuje kategoriju.
+
+
+## Pregled fondova koji pobjedjuju svoju kategoriju
+
+```{r}
+grt = cat_funds[cat_funds$fund_return_10years > cat_funds$category_return_10years, ]
+
+plot(grt$price_book, grt$price_earnings)
+plot(grt$price_sales, grt$price_earnings)
+plot(grt$price_cashflow, grt$price_earnings)
+```
+
+```{r}
+fit.book = lm(price_earnings ~ price_book, data=grt)
+
+plot(grt$price_book, grt$price_earnings)
+lines(grt$price_book,fit.book$fitted.values,col='red')
+
+fit.sales = lm(price_earnings ~ price_sales, data=grt)
+
+plot(grt$price_sales, grt$price_earnings)
+lines(grt$price_sales,fit.sales$fitted.values,col='red')
+
+fit.cashflow = lm(price_earnings ~ price_cashflow, data=grt)
+
+plot(grt$price_cashflow, grt$price_earnings)
+lines(grt$price_cashflow,fit.cashflow$fitted.values,col='red')
+```
+
+```{r}
+summary(fit.book)
+
+summary(fit.sales)
+
+summary(fit.cashflow)
+```
+
+```{r}
+cor(grt$price_sales, grt$price_earnings)
+
+cor.test(grt$price_sales, grt$price_earnings)
+
+summary(fit.sales)
+```
+```{r}
+fit.mul = lm(price_earnings ~ price_sales + price_book + price_cashflow, data=grt)
+summary(fit.mul)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
