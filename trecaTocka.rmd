@@ -206,3 +206,54 @@ prop.test(rating_proportions,rating_sum, alt="greater")
 
 Odbacujemo H0, hipotezu da su proporcije visoko rangiranih jednake kod većih i manjih fondova.
 Veći fondovi imaju veću proporciju visoko rangiranih fondova nego mali.
+
+
+Grafički prikaz odnosa uspješnosti računate na prvi način i veličine fonda.
+```{r}
+plot(mutual_funds$net_assets,mutual_funds$success)
+```
+
+Linearni model metrike uspjeha i veličine fonda
+```{r}
+fit.size <- lm(success~net_assets, data=mutual_funds)
+
+plot(mutual_funds$net_assets,mutual_funds$success)
+lines(mutual_funds$net_assets,fit.size$fitted.values,col='red')
+```
+Nagib pravca pokazuje blagu ovisnost o veličini fonda na njegov uspjeh. Kako bi se dobiveni model analizirao potrebno je provjeriti da pretpostavke narušene. Pritom su najbitnije pretpostavke o regresorima  i o rezidualima.
+
+
+Normalnost reziduala moguće je provjeriti grafički, pomoću kvantil-kvantil plota (usporedbom s linijom normalne razdiobe), te statistički pomoću Kolmogorov-Smirnovljevog testa.
+```{r res}
+
+selected.model <- fit.size
+
+plot(selected.model$residuals) #gledajuci reziduale na ovaj nacin tesko je suditi o normalnosti
+
+#histogram je vrlo interpretativan
+hist((selected.model$residuals))
+hist(rstandard(selected.model))
+
+#q-q plot reziduala s linijom normalne distribucije
+qqnorm(rstandard(selected.model))
+qqline(rstandard(selected.model))
+
+plot(selected.model$fitted.values,selected.model$residuals) #reziduale je dobro prikazati u ovisnosti o procjenama modela
+
+#KS test na normalnost
+ks.test(rstandard(fit.size),'pnorm')
+
+require(nortest)
+lillie.test(rstandard(fit.size))
+
+```
+NEKI TEKST
+
+Analiza modela
+
+```{r analiza procijenjenih modela}
+
+summary(fit.size)
+
+```
+STO TU VIDIMO?
