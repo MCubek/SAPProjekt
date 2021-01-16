@@ -1,0 +1,746 @@
+---
+title: "Sap"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Uvod
+
+
+## Učitavanje podataka
+```{r fig.height=3.5, fig.width=5, echo=FALSE}
+mutual_funds <- read.csv("C:/Users/Marino PC/Desktop/sve/SAP projekt/mutual_funds.csv")
+```
+
+
+## Postoji li razlika u povratima fondova s obzirom na stil investiranja
+
+Growth investiranje je investiranje u one firme koje su pokazale veliki rast.
+Value je investiranej u one firme čija je tržišna vrijednost ispod stvarne, odnosno u podcjenjene firme.
+Blend je investirane u različite kompanije iz istog "razreda" kompanija, npr. S&P500.
+
+
+```{r fig.height=3.5, fig.width=5, echo=FALSE}
+godine <- c(2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010)
+barplot(summary(mutual_funds$investment))
+
+summary(mutual_funds[mutual_funds$investment == "Growth",]$ytd_return)
+summary(mutual_funds[mutual_funds$investment == "Value",]$ytd_return)
+summary(mutual_funds[mutual_funds$investment == "Blend",]$ytd_return)
+
+sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$ytd_return))
+
+growth_investment <- c(sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$ytd_return)), 
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2018)), 
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2017)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2016)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2015)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2014)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2013)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2012)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2011)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2010)))
+
+value_investment <- c(sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$ytd_return)), 
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2018)), 
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2017)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2016)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2015)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2014)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2013)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2012)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2011)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2010)))
+
+blend_investment <- c(sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$ytd_return)), 
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2018)), 
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2017)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2016)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2015)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2014)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2013)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2012)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2011)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2010)))
+
+plot(godine,c(value_investment),
+     main = "Broj fondova sa strategijima u zadnjih 10 godina",
+     type = "l",
+     frame = FALSE,
+     ylim = c(1000, 3000),
+     col="red")
+lines(godine,growth_investment,
+      pch = 18,
+      type = "l",
+       col="blue")
+lines(godine,blend_investment,
+      pch = 18,
+      type = "l",
+      lty = 2,
+       col="green")
+
+legend("topleft", legend=c("Value", "Growth","Blend"),
+       col = c("red", "blue", "green"), lty = 1:1, box.lty=0)
+```
+
+```{r}
+value_return <- c(mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$ytd_return)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2018)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2017)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2016)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2015)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2014)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2013)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2012)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2011)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2010)))
+
+growth_return <- c(mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$ytd_return)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2018)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2017)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2016)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2015)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2014)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2013)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2012)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2011)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2010)))
+
+blend_return <- c(mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$ytd_return)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2018)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2017)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2016)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2015)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2014)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2013)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2012)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2011)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2010)))
+
+plot(godine,value_return,
+     main = "Povrat fondova sa strategijima u zadnjih 10 godina",
+     type = "l",
+     frame = FALSE,
+     col="red")
+lines(godine,growth_return,
+      pch = 18,
+      type = "l",
+       col="blue")
+lines(godine,blend_return,
+      pch = 18,
+      type = "l",
+      lty = 2,
+       col="green")
+
+legend("topleft", legend=c("Value", "Growth","Blend"),
+       col = c("red", "blue", "green"), lty = 1:2, box.lty=0)
+
+```
+
+Da bi usporedili koja strategija je najbolja koristit čemo povrat u godini uzimanja podataka, 3-godišnji, 5-godišnji i 10-godišnji povrat 
+
+## Testiranje
+
+```{r}
+growth_1years <- c(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_1year))
+value_1years <- c(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_1year))
+blend_1years <- c(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_1year))
+
+growth_3years <- c(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_3years))
+value_3years <- c(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_3years))
+blend_3years <- c(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_3years))
+
+growth_5years <- c(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_5years))
+value_5years <- c(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_5years))
+blend_5years <- c(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_5years))
+
+growth_10years <- c(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_10years))
+value_10years <- c(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_10years))
+blend_10years <- c(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_10years))
+
+summary(growth_1years)
+summary(value_1years)
+summary(blend_1years)
+
+summary(growth_3years)
+summary(value_3years)
+summary(blend_3years)
+
+summary(growth_5years)
+summary(value_5years)
+summary(blend_5years)
+
+summary(growth_10years)
+summary(value_10years)
+summary(blend_10years)
+
+boxplot(growth_1years, value_1years, blend_1years,
+        names = c('Growth 1 god','Value 1 god', 'Blend 1 god'),
+        main='1-o godišnji povrati')
+
+boxplot(growth_3years, value_3years, blend_3years,
+        names = c('Growth 3 god','Value 3 god', 'Blend 3 god'),
+        main='3-o godišnji povrati')
+
+boxplot(growth_5years, value_5years, blend_5years,
+        names = c('Growth 5 god','Value 5 god', 'Blend 5 god'),
+        main='5-o godišnji povrati')
+
+boxplot(growth_10years, value_10years, blend_10years,
+        names = c('Growth 10 god','Value 10 god', 'Blend 10 god'),
+        main='10-o godišnji povrati')
+```
+
+```{r}
+hist(growth_1years,
+     breaks = 20,
+    main = 'Histogram povrata Growth 1',
+    xlab = 'Povrat u %',
+    col='red')
+hist(blend_1years,
+     breaks = 20,
+     main = 'Histogram povrata Blend 1',
+     xlab = 'Povrat u %',
+     col='red')
+hist(value_1years,
+     breaks = 20,
+     main = 'Histogram povrata Value 1',
+     xlab = 'Povrat u %',
+     col='red')
+
+
+hist(growth_3years,
+     breaks = 20,
+    main = 'Histogram povrata Growth 3',
+    xlab = 'Povrat u %',
+    col='red')
+hist(blend_3years,
+     breaks = 20,
+     main = 'Histogram povrata Blend 3',
+     xlab = 'Povrat u %',
+     col='red')
+hist(value_3years,
+     breaks = 20,
+     main = 'Histogram povrata Value 3',
+     xlab = 'Povrat u %',
+     col='red')
+
+
+hist(growth_5years,
+     breaks = 20,
+    main = 'Histogram povrata Growth 5',
+    xlab = 'Povrat u %',
+    col='red')
+hist(blend_5years,
+     breaks = 20,
+     main = 'Histogram povrata Blend 5',
+     xlab = 'Povrat u %',
+     col='red')
+hist(value_5years,
+     breaks = 20,
+     main = 'Histogram povrata Value 5',
+     xlab = 'Povrat u %',
+     col='red')
+
+
+
+hist(growth_10years,
+     breaks = 20,
+    main = 'Histogram povrata Growth 10',
+    xlab = 'Povrat u %',
+    col='red')
+hist(blend_10years,
+     breaks = 20,
+     main = 'Histogram povrata Blend 10',
+     xlab = 'Povrat u %',
+     col='red')
+
+hist(value_10years,
+     breaks = 20,
+     main = 'Histogram povrata Value 10',
+     xlab = 'Povrat u %',
+     col='red')
+```
+
+```{r}
+qqnorm(growth_1years,pch=1,frame=FALSE,main='Growth 1')
+qqline(growth_1years,col='steelblue',lwd=2)
+qqnorm(blend_1years,pch=1,frame=FALSE,main='Blend 1')
+qqline(blend_1years,col='steelblue',lwd=2)
+qqnorm(value_1years,pch=1,frame=FALSE,main='Value 1')
+qqline(value_1years,col='steelblue',lwd=2)
+
+
+qqnorm(growth_3years,pch=1,frame=FALSE,main='Growth 3')
+qqline(growth_3years,col='steelblue',lwd=2)
+qqnorm(blend_3years,pch=1,frame=FALSE,main='Blend 3')
+qqline(blend_3years,col='steelblue',lwd=2)
+qqnorm(value_3years,pch=1,frame=FALSE,main='Value 3')
+qqline(value_3years,col='steelblue',lwd=2)
+
+
+
+qqnorm(growth_5years,pch=1,frame=FALSE,main='Growth 5')
+qqline(growth_5years,col='steelblue',lwd=2)
+qqnorm(blend_5years,pch=1,frame=FALSE,main='Blend 5')
+qqline(blend_5years,col='steelblue',lwd=2)
+qqnorm(value_5years,pch=1,frame=FALSE,main='Value 5')
+qqline(value_5years,col='steelblue',lwd=2)
+
+
+qqnorm(growth_10years,pch=1,frame=FALSE,main='Growth 10')
+qqline(growth_10years,col='steelblue',lwd=2)
+qqnorm(blend_10years,pch=1,frame=FALSE,main='Blend 10')
+qqline(blend_10years,col='steelblue',lwd=2)
+qqnorm(value_10years,pch=1,frame=FALSE,main='Value 10')
+qqline(value_10years,col='steelblue',lwd=2)
+```
+
+```{r fig.height=3.5, fig.width=5, echo=FALSE}
+print('Growth Blend 1')
+var(growth_1years)
+var(blend_1years)
+var.test(growth_1years,blend_1years)
+print('Growth Value 1')
+var(growth_1years)
+var(value_1years)
+var.test(growth_1years,value_1years)
+print('Value Blend 1')
+var(value_1years)
+var(blend_1years)
+var.test(value_1years,blend_1years)
+
+
+print('Growth Blend 3')
+var(growth_3years)
+var(blend_3years)
+var.test(growth_3years,blend_3years)
+print('Growth Value 3')
+var(growth_3years)
+var(value_3years)
+var.test(growth_3years,value_3years)
+print('Value Blend 3')
+var(value_3years)
+var(blend_3years)
+var.test(value_3years,blend_3years)
+
+
+print('Growth Blend 5')
+var(growth_5years)
+var(blend_5years)
+var.test(growth_5years,blend_5years)
+print('Growth Value 5')
+var(growth_5years)
+var(value_5years)
+var.test(growth_5years,value_5years)
+print('Value Blend 5')
+var(value_5years)
+var(blend_5years)
+var.test(value_5years,blend_5years)
+
+
+
+print('Growth Blend 10')
+var(growth_10years)
+var(blend_10years)
+var.test(growth_10years,blend_10years)
+print('Growth Value 10')
+var(growth_10years)
+var(value_10years)
+var.test(growth_10years,value_10years)
+print('Value Blend 10')
+var(value_10years)
+var(blend_10years)
+var.test(value_10years,blend_10years)
+
+```
+
+
+```{r fig.height=3.5, fig.width=5, echo=FALSE}
+print('Growth Blend 1')
+t.test(growth_1years, blend_1years,alt="greater",var.equal = TRUE)
+print('Growth Value 1')
+t.test(growth_1years, value_1years, alt="greater", var.equal = FALSE)
+print('Blend Value 1')
+t.test(blend_1years, value_1years, alt="greater", var.equal = FALSE)
+
+print('Growth Blend 3')
+t.test(growth_3years, blend_3years,alt="greater",var.equal = FALSE)
+print('Growth Value 3')
+t.test(growth_3years, value_3years, alt="greater", var.equal = FALSE)
+print('Blend Value 3')
+t.test(blend_3years, value_3years, alt="greater", var.equal = FALSE)
+
+print('Growth Blend 5')
+t.test(growth_5years, blend_5years,alt="greater",var.equal = TRUE)
+print('Growth Value 5')
+t.test(growth_5years, value_5years, alt="greater", var.equal = FALSE)
+print('Blend Value 5')
+t.test(blend_5years, value_5years, alt="greater", var.equal = FALSE)
+
+print('Growth Blend 10')
+t.test(growth_10years, blend_10years,alt="greater",var.equal = TRUE)
+print('Growth Value 10')
+t.test(growth_10years, value_10years, alt="greater", var.equal = FALSE)
+print('Blend Value 10')
+t.test(blend_10years, value_10years, alt="greater", var.equal = FALSE)
+```
+
+
+## Je li velicina firmi u koje fonda investira neovisna o tome koju stil investiranja koristi fond
+```{r fig.height=3.5, fig.width=5, echo=FALSE}
+
+mutual_funds_copy = data.frame(mutual_funds)
+tracemem(mutual_funds)==tracemem(mutual_funds_copy)
+untracemem(mutual_funds_copy)
+untracemem(mutual_funds_copy)
+mutual_funds_copy['investment'] <- sapply(mutual_funds_copy['investment'], as.character)
+mutual_funds_copy['size'] <- sapply(mutual_funds_copy['size'], as.character)
+```
+
+
+Napravimo kontigencijsku tablicu i dodamo sume redaka i stupaca 
+```{r fig.height=3.5, fig.width=5, echo=FALSE}
+
+tbl = table(mutual_funds_copy[mutual_funds_copy$investment == 'Blend' 
+                      | mutual_funds_copy$investment == 'Growth' 
+                      | mutual_funds_copy$investment == 'Value',]$investment, 
+            mutual_funds_copy[mutual_funds_copy$investment == 'Blend' 
+                      | mutual_funds_copy$investment == 'Growth' 
+                      | mutual_funds_copy$investment == 'Value',]$size)
+tbl
+
+
+added_margins_tbl = addmargins(tbl)
+print(added_margins_tbl)
+```
+
+
+Provjerimo jesu li zadovoljene pretpostavke testa
+```{r, echo=FALSE}
+
+for (col_names in colnames(added_margins_tbl)){
+  for (row_names in rownames(added_margins_tbl)){
+    if (!(row_names == 'Sum' | col_names == 'Sum') ){
+      cat('Očekivane frekvencije za razred ',col_names,'-',row_names,': ',(added_margins_tbl[row_names,'Sum'] * added_margins_tbl['Sum',col_names]) / added_margins_tbl['Sum','Sum'],'\n')
+    }
+  }
+}
+```
+
+Pretpostavke su zadovoljene, možemo provesti test
+
+
+```{r}
+chisq.test(tbl,correct=F)
+```
+
+
+
+
+## Povrat ovisno o price/book, price/cashflow, price/earnings i price/sales ratio
+
+```{r fig.height=4.5, fig.width=4.5, echo=FALSE}
+removeCol <- function(data, desiredCols){
+  completeVec <- complete.cases(data[, desiredCols])
+  return(data[completeVec, ])
+}
+## Uklananje praznih redova
+last_year = removeCol(mutual_funds, "ytd_return")
+
+plot(mutual_funds$price_book, mutual_funds$ytd_return)
+plot(mutual_funds$price_cashflow, mutual_funds$ytd_return)
+plot(mutual_funds$price_earnings, mutual_funds$ytd_return)
+plot(mutual_funds$price_sales, mutual_funds$ytd_return)
+
+fit.price_book = lm(ytd_return ~ price_book, data = last_year)
+fit.price_cashflow = lm(ytd_return ~ price_cashflow, data = last_year)
+fit.price_earnings = lm(ytd_return ~ price_earnings, data = last_year)
+fit.price_sales = lm(ytd_return ~ price_sales, data = last_year)
+
+plot(last_year$price_book, last_year$ytd_return)
+lines(last_year$price_book,fit.price_book$fitted.values,col='red')
+
+plot(last_year$price_cashflow, last_year$ytd_return)
+lines(last_year$price_cashflow,fit.price_cashflow$fitted.values,col='red')
+
+plot(last_year$price_earnings, last_year$ytd_return)
+lines(last_year$price_earnings,fit.price_earnings$fitted.values,col='red')
+
+plot(last_year$price_sales, last_year$ytd_return)
+lines(last_year$price_sales,fit.price_sales$fitted.values,col='red')
+```
+
+
+##Normalnost reziduala i homogenost varijance
+
+
+Nagibt pravca postoji ali nije velik. Kako bi analizirali model prvo moramo provjeriti da pretpostavke modela nisu narušene, tj. normalnost reziduala i homogenost varijance.
+```{r}
+selected.model = fit.price_book
+
+plot(selected.model$residuals)
+
+hist((selected.model$residuals))
+hist(rstandard(selected.model))
+## Distribucija dosta nalikuje normalnoj
+
+qqnorm(rstandard(selected.model))
+qqline(rstandard(selected.model))
+
+plot(selected.model$fitted.values, selected.model$residuals)
+
+ks.test(rstandard(rating_last),'pnorm')
+lillie.test(rstandard(rating_last))
+```
+
+
+Normalnost reziduala i homogenost varijance
+```{r fig.height=3.5, fig.width=5, echo=FALSE}
+summary(fit.price_book)
+summary(fit.price_cashflow)
+summary(fit.price_earnings)
+summary(fit.price_sales)
+```
+
+## Povrat fondova ovisno o stilu investiranja ako uzmemo i rizik u obzir
+
+
+```{r}
+growth_3years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_sharpe_ratio_3years))
+value_3years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_sharpe_ratio_3years))
+blend_3years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_sharpe_ratio_3years))
+
+growth_5years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_sharpe_ratio_5years))
+value_5years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_sharpe_ratio_5years))
+blend_5years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_sharpe_ratio_5years))
+
+growth_10years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_sharpe_ratio_10years))
+value_10years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_sharpe_ratio_10years))
+blend_10years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_sharpe_ratio_10years))
+
+summary(growth_3years_sharp)
+summary(value_3years_sharp)
+summary(blend_3years_sharp)
+
+summary(growth_5years_sharp)
+summary(value_5years_sharp)
+summary(blend_5years_sharp)
+
+summary(growth_10years_sharp)
+summary(value_10years_sharp)
+summary(blend_10years_sharp)
+
+boxplot(growth_3years_sharp, value_3years_sharp, blend_3years_sharp,
+        names = c('Growth 3 god','Value 3 god', 'Blend 3 god'),
+        main='3-o godišnji sharp ratio')
+
+boxplot(growth_5years_sharp, value_5years_sharp, blend_5years_sharp,
+        names = c('Growth 5 god','Value 5 god', 'Blend 5 god'),
+        main='5-o godišnji sharp ratio')
+
+boxplot(growth_10years_sharp, value_10years_sharp, blend_10years_sharp,
+        names = c('Growth 10 god','Value 10 god', 'Blend 10 god'),
+        main='10-o godišnji sharp ratio')
+```
+
+```{r}
+hist(growth_3years_sharp,
+     breaks = 20,
+    main = 'Histogram povrata Growth 3',
+    xlab = 'Povrat u %',
+    col='red')
+hist(blend_3years_sharp,
+     breaks = 20,
+     main = 'Histogram povrata Blend 3',
+     xlab = 'Povrat u %',
+     col='red')
+
+hist(value_3years_sharp,
+     breaks = 20,
+     main = 'Histogram povrata Value 3',
+     xlab = 'Povrat u %',
+     col='red')
+
+hist(growth_5years_sharp,
+     breaks = 20,
+    main = 'Histogram povrata Growth 5',
+    xlab = 'Povrat u %',
+    col='red')
+hist(blend_5years_sharp,
+     breaks = 20,
+     main = 'Histogram povrata Blend 5',
+     xlab = 'Povrat u %',
+     col='red')
+
+hist(value_5years_sharp,
+     breaks = 20,
+     main = 'Histogram povrata Value 5',
+     xlab = 'Povrat u %',
+     col='red')
+
+hist(growth_10years_sharp,
+     breaks = 20,
+    main = 'Histogram povrata Growth 10',
+    xlab = 'Povrat u %',
+    col='red')
+hist(blend_10years_sharp,
+     breaks = 20,
+     main = 'Histogram povrata Blend 10',
+     xlab = 'Povrat u %',
+     col='red')
+
+hist(value_10years_sharp,
+     breaks = 20,
+     main = 'Histogram povrata Value 10',
+     xlab = 'Povrat u %',
+     col='red')
+```
+
+```{r}
+qqnorm(growth_3years_sharp,pch=1,frame=FALSE,main='Growth 3')
+qqline(growth_3years_sharp,col='steelblue',lwd=2)
+qqnorm(blend_3years_sharp,pch=1,frame=FALSE,main='Blend 3')
+qqline(blend_3years_sharp,col='steelblue',lwd=2)
+qqnorm(value_3years_sharp,pch=1,frame=FALSE,main='Value 3')
+qqline(value_3years_sharp,col='steelblue',lwd=2)
+
+qqnorm(growth_5years_sharp,pch=1,frame=FALSE,main='Growth 5')
+qqline(growth_5years_sharp,col='steelblue',lwd=2)
+qqnorm(blend_5years_sharp,pch=1,frame=FALSE,main='Blend 5')
+qqline(blend_5years_sharp,col='steelblue',lwd=2)
+qqnorm(value_5years_sharp,pch=1,frame=FALSE,main='Value 5')
+qqline(value_5years_sharp,col='steelblue',lwd=2)
+
+qqnorm(growth_10years_sharp,pch=1,frame=FALSE,main='Growth 10')
+qqline(growth_10years_sharp,col='steelblue',lwd=2)
+qqnorm(blend_10years_sharp,pch=1,frame=FALSE,main='Blend 10')
+qqline(blend_10years_sharp,col='steelblue',lwd=2)
+qqnorm(value_10years_sharp,pch=1,frame=FALSE,main='Value 10')
+qqline(value_10years_sharp,col='steelblue',lwd=2)
+```
+
+```{r fig.height=3.5, fig.width=5, echo=FALSE}
+print('Growth Blend 3')
+var(growth_3years_sharp)
+var(blend_3years_sharp)
+var.test(growth_3years_sharp,blend_3years_sharp)
+print('Growth Value 3')
+var(growth_3years_sharp)
+var(value_3years_sharp)
+var.test(growth_3years_sharp,value_3years_sharp)
+print('Value Blend 3')
+var(value_3years_sharp)
+var(blend_3years_sharp)
+var.test(value_3years_sharp,blend_3years_sharp)
+
+print('Growth Blend 5')
+var(growth_5years_sharp)
+var(blend_5years_sharp)
+var.test(growth_5years_sharp,blend_5years_sharp)
+print('Growth Value 5')
+var(growth_5years_sharp)
+var(value_5years_sharp)
+var.test(growth_5years_sharp,value_5years_sharp)
+print('Value Blend 5')
+var(value_5years_sharp)
+var(blend_5years_sharp)
+var.test(value_5years_sharp,blend_5years_sharp)
+
+print('Growth Blend 10')
+var(growth_10years_sharp)
+var(blend_10years_sharp)
+var.test(growth_10years_sharp,blend_10years_sharp)
+print('Growth Value 10')
+var(growth_10years_sharp)
+var(value_10years_sharp)
+var.test(growth_10years_sharp,value_10years_sharp)
+print('Value Blend 10')
+var(value_10years_sharp)
+var(blend_10years_sharp)
+var.test(value_10years_sharp,blend_10years_sharp)
+
+```
+
+
+```{r fig.height=3.5, fig.width=5, echo=FALSE}
+print('Growth Blend 3')
+t.test(growth_3years_sharp, blend_3years_sharp,alt="greater",var.equal = TRUE)
+print('Growth Value 3')
+t.test(growth_3years_sharp, value_3years_sharp, alt="greater", var.equal = FALSE)
+print('Blend Value 3')
+t.test(blend_3years_sharp, value_3years_sharp, alt="greater", var.equal = FALSE)
+
+
+print('Growth Blend 5')
+t.test(growth_5years_sharp, blend_5years_sharp,alt="greater",var.equal = FALSE)
+print('Growth Value 5')
+t.test(growth_5years_sharp, value_5years_sharp, alt="greater", var.equal = FALSE)
+print('Blend Value 5')
+t.test(blend_5years_sharp, value_5years_sharp, alt="greater", var.equal = FALSE)
+
+
+print('Growth Blend 10')
+t.test(growth_10years_sharp, blend_10years_sharp,alt="greater",var.equal = FALSE)
+print('Growth Value 10')
+t.test(growth_10years_sharp, value_10years_sharp, alt="greater", var.equal = FALSE)
+print('Blend Value 10')
+t.test(blend_10years_sharp, value_10years_sharp, alt="less", var.equal = FALSE)
+```
+
+
+## Postoji li razlika u povratima fondova s obzirom na kategoriju fonda
+
+## Ovisnost povrata zadnje godine o kategoriji
+
+```{r}
+
+categories <- c('Foreign Large Blend', 'Foreign Large Growth', 'Large Blend', 'Large Growth', 'Large Value', 'Mid-Cap Blend', 'Mid-Cap Growth', 'Mid-Cap Value', 'Small Blend', 'Small Growth', 'Small Value', 'World Large Stock')
+
+boxplot(fund_return_1year ~ category, data=mutual_funds[mutual_funds$category %in% categories,])
+
+fit.multi.1 = lm(fund_return_1year ~ category, mutual_funds[mutual_funds$category %in% categories,])
+summary(fit.multi.1)
+```
+
+```{r}
+boxplot(fund_return_3years ~ category, data=mutual_funds[mutual_funds$category %in% categories,])
+
+fit.multi.1 = lm(fund_return_3years ~ category, mutual_funds[mutual_funds$category %in% categories,])
+summary(fit.multi.1)
+```
+
+```{r}
+
+boxplot(fund_return_5years ~ category, data=mutual_funds[mutual_funds$category %in% categories,])
+
+fit.multi.1 = lm(fund_return_5years ~ category, mutual_funds[mutual_funds$category %in% categories,])
+summary(fit.multi.1)
+```
+
+```{r}
+boxplot(fund_return_10years ~ category, data=mutual_funds[mutual_funds$category %in% categories,])
+
+fit.multi.1 = lm(fund_return_10years ~ category, mutual_funds[mutual_funds$category %in% categories,])
+summary(fit.multi.1)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
