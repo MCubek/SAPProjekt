@@ -1,0 +1,483 @@
+---
+title: "Projekt"
+author: "Frane Batagelj"
+date: "13/12/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Opis podataka
+
+Učitajmo potrebne pakete.
+```{r echo=T, error=FALSE, warning=FALSE, message=FALSE}
+library(dplyr)
+```
+
+Učitajmo podatke.
+```{r}
+mutual_funds = read.csv("C:/Materijali/SAP/Projekt/mutual_funds.csv")
+dim(mutual_funds)
+```
+
+```{r}
+names(mutual_funds)
+```
+
+```{r}
+mutual_funds = select(mutual_funds,c("fund_name","category","net_annual_expense_ratio_fund","net_annual_expense_ratio_category","fund_return_10years","category_return_10years","morningstar_rating","net_assets", "investment", "price_earnings"))
+dim(mutual_funds)
+```
+
+```{r}
+summary(mutual_funds)
+sapply(mutual_funds,class)
+```
+
+Paziti na ove kad se gleda morningstar_rating
+
+```{r}
+mutual_funds$morningstar_rating = as.factor(mutual_funds$morningstar_rating)
+mutual_funds$category = as.factor(mutual_funds$category)
+mutual_funds[mutual_funds$morningstar_rating==0,]
+mutual_funds <- subset(mutual_funds, mutual_funds$morningstar_rating != 0)
+```
+
+Tražimo nepoznate podatke
+```{r}
+imaNedostajucih = 0;
+for (col_name in names(mutual_funds)){
+  if (sum(is.na(mutual_funds[,col_name])) > 0){
+    cat('Ukupno nedostajućih vrijednosti za varijablu ',col_name, ': ', sum(is.na(mutual_funds[,col_name])),'\n')
+    imaNedostajucih = 1;
+  } 
+}
+
+if(!imaNedostajucih) {
+  cat("Nema nedostajucih podataka")
+}
+
+cat('\nDimenzija podataka: ', dim(mutual_funds))
+```
+
+Pogledamo podatke koje imamo
+
+```{r, fig.width = 14, fig.height=5}
+hist(mutual_funds$net_annual_expense_ratio_fund,main='Net annual expense ratio fund[%]', xlab='Expense ratio', ylab='Frequency')
+hist(mutual_funds$net_annual_expense_ratio_category,main='Net annual expense ratio of category[%]', xlab='Expense ratio', ylab='Frequency')
+hist(mutual_funds$fund_return_10years,main='Fund return in 10 years[%]', xlab='Return', ylab='Frequency')
+hist(mutual_funds$category_return_10years,main='Category return in 10 years[%]', xlab='Return', ylab='Frequency')
+mutual_funds <- mutual_funds %>% mutate(success = fund_return_10years - category_return_10years)
+hist(mutual_funds$success,probability=T,main='Rate of success[%]', xlab='Success', ylab='Frequency',breaks = 20)
+lines(density(mutual_funds$success), col = 2)
+dim(mutual_funds)
+
+
+```
+
+Provjerimo kategorijske podatke
+
+```{r, fig.width = 14, fig.height=5}
+barplot(summary(mutual_funds$morningstar_rating),main='Morningstar rating')
+```
+POdjela na grupu s outlierima i bez outliera
+```{r, fig.width = 14, fig.height=5}
+mutual_funds_outliers <- mutual_funds
+Q <- quantile(mutual_funds$success, probs=c(.25, .75), na.rm = FALSE)
+iqr <- IQR(mutual_funds$success)
+mutual_funds <- subset(mutual_funds, mutual_funds$success > (Q[1] - 1.5*iqr) & mutual_funds$success < (Q[2]+1.5*iqr))
+
+```
+
+
+
+```{r, fig.width = 14, fig.height=5}
+hist(mutual_funds$net_annual_expense_ratio_fund,main='Net annual expense ratio fund[%]', xlab='Expense ratio', ylab='Frequency')
+hist(mutual_funds$net_annual_expense_ratio_category,main='Net annual expense ratio of category[%]', xlab='Expense ratio', ylab='Frequency')
+hist(mutual_funds$fund_return_10years,main='Fund return in 10 years[%]', xlab='Return', ylab='Frequency')
+hist(mutual_funds$category_return_10years,main='Category return in 10 years[%]', xlab='Return', ylab='Frequency')
+hist(mutual_funds$success,probability=T,main='Rate of success[%]', xlab='Success', ylab='Frequency',breaks = 20)
+lines(density(mutual_funds$success),col=2)
+barplot(summary(mutual_funds$morningstar_rating),main='Morningstar rating')
+dim(mutual_funds)
+
+```
+
+Podjela na "skupe" i "jeftine" fondove
+
+```{r, fig.width = 14, fig.height=5}
+mutual_funds_expensive = mutual_funds[mutual_funds$net_annual_expense_ratio_fund > mutual_funds$net_annual_expense_ratio_category,]
+mutual_funds_cheap = mutual_funds[mutual_funds$net_annual_expense_ratio_fund <= mutual_funds$net_annual_expense_ratio_category,]
+
+mutual_funds_outliers_expensive = mutual_funds_outliers[mutual_funds_outliers$net_annual_expense_ratio_fund > mutual_funds_outliers$net_annual_expense_ratio_category,]
+mutual_funds_outliers_cheap = mutual_funds_outliers[mutual_funds_outliers$net_annual_expense_ratio_fund <= mutual_funds_outliers$net_annual_expense_ratio_category,]
+
+summary(mutual_funds_expensive)
+cat("\n")
+summary(mutual_funds_cheap)
+cat("\n")
+summary(mutual_funds_outliers_expensive)
+cat("\n")
+summary(mutual_funds_outliers_cheap)
+
+```
+
+Jesu li skuplji fondovi uspjesniji?
+
+```{r}
+cat('Prosječni uspjeh skupljih fondova bez outliera iznosi  ', mean(mutual_funds_expensive$success),'\n')
+cat('Prosječni uspjeh jeftinijih fondova bez outliera iznosi  ', mean(mutual_funds_cheap$success),'\n')
+
+cat('Prosječni uspjeh skupljih fondova s outlierima iznosi  ', mean(mutual_funds_outliers_expensive$success),'\n')
+cat('Prosječni uspjeh jeftinijih fondova s outlierima iznosi  ', mean(mutual_funds_outliers_cheap$success),'\n')
+require(modeest)
+cat('Prosječni rating skupljih fondova iznosi  ', mfv(mutual_funds_expensive$morningstar_rating),'\n')
+cat('Prosječni rating jeftinijih fondova iznosi  ', mfv(mutual_funds_cheap$morningstar_rating),'\n')
+```
+
+```{r}
+boxplot(mutual_funds_expensive$success, mutual_funds_cheap$success, 
+        names = c('Expensive fund success','Cheap fund success'),
+        main='Boxplot of expensive and cheap fund success rate without outliers')
+
+boxplot(mutual_funds_outliers_expensive$success, mutual_funds_outliers_cheap$success, 
+        names = c('Expensive fund success','Cheap fund success'),
+        main='Boxplot of expensive and cheap fund success rate with outliers')
+```
+Histogrami
+
+```{r}
+hist(mutual_funds_outliers_expensive$success,
+     breaks = 20,
+     main='Histogram of rate of success of expensive funds with outliers',
+     xlab='Success rate')
+
+hist(mutual_funds_outliers_cheap$success, 
+     main='Histogram of rate of success of cheap funds with outliers',
+     xlab='Success rate')
+
+hist(mutual_funds_expensive$success,
+     breaks = 20,
+     main='Histogram of rate of success of expensive funds without outliers',
+     xlab='Success rate')
+
+hist(mutual_funds_cheap$success, 
+     main='Histogram of rate of success of cheap funds without outliers',
+     xlab='Success rate')
+```
+
+Qq plotovi
+
+```{r}
+qqnorm(mutual_funds_expensive$success, pch = 1, frame = FALSE,main='Expensive funds')
+qqline(mutual_funds_expensive$success, col = "steelblue", lwd = 2)
+
+qqnorm(mutual_funds_cheap$success, pch = 1, frame = FALSE,main='Cheap funds')
+qqline(mutual_funds_cheap$success, col = "steelblue", lwd = 2)
+
+qqnorm(mutual_funds_outliers_expensive$success, pch = 1, frame = FALSE,main='Expensive funds with outliers')
+qqline(mutual_funds_outliers_expensive$success, col = "steelblue", lwd = 2)
+
+qqnorm(mutual_funds_outliers_cheap$success, pch = 1, frame = FALSE,main='Cheap funds with outliers')
+qqline(mutual_funds_outliers_cheap$success, col = "steelblue", lwd = 2)
+
+```
+Budući da imamo veliku kolićinu podataka, možemo pretpostaviti normalnost.
+
+Provjeravamo normalnost
+
+```{r}
+library(nortest)
+lillie.test(mutual_funds$success)
+lillie.test(mutual_funds_outliers$success)
+```
+
+Ovo ne valja
+--------------------------------------------------------------
+Provjeravamo varijanice
+
+```{r}
+var(mutual_funds_expensive$success)
+var(mutual_funds_cheap$success)
+```
+Uspoređujemo jednakost varijanci
+
+```{r}
+var.test(mutual_funds_expensive$success, mutual_funds_cheap$success)
+```
+
+Odbijamo pretpostavku H_0 da su varijance jednake. Koristimo t-test
+
+```{r}
+t.test(mutual_funds_cheap$success, mutual_funds_expensive$success, alt = "greater", var.equal = FALSE)
+```
+
+MOžemo reći da su jeftiniji fondovi u prosjeku uspješniji.
+
+-----------------------------------------------------------------------------------------------------------
+Gledamo neparametarski Mann-Whitney-Wilcoxov test
+
+```{r}
+wilcox.test(mutual_funds_cheap$success, mutual_funds_expensive$success, alternative = "greater")
+wilcox.test(mutual_funds_outliers_cheap$success, mutual_funds_outliers_expensive$success, alternative = "greater")
+```
+Mozemo reci da su jeftiniji fondovi u prosjeku uspjesniji
+
+Sada gledamo usporedbu po kategorijskom podatku Morningstar Rating
+
+```{r}
+levels(mutual_funds$morningstar_rating)
+table(mutual_funds$morningstar_rating)
+```
+```{r}
+table(mutual_funds_expensive$morningstar_rating)
+table(mutual_funds_cheap$morningstar_rating)
+```
+
+Histogram
+
+```{r, fig.width = 14, fig.height=5}
+barplot(summary(mutual_funds_expensive$morningstar_rating),main='Morningstar rating for expensive funds')
+barplot(summary(mutual_funds_cheap$morningstar_rating),main='Morningstar rating for cheap funds')
+```
+
+```{r}
+expensive_rating <- table(mutual_funds_expensive$morningstar_rating)
+cheap_rating <-table(mutual_funds_cheap$morningstar_rating)
+round(prop.table(expensive_rating),digits=2)
+round(prop.table(cheap_rating),digits=2)
+```
+```{r, fig.width = 14, fig.height=5}
+barplot(prop.table(expensive_rating), xlab='Rating',ylab='Frequency',main="Morningstar rating distribution of expensive funds",ylim=range(pretty(c(0,prop.table(expensive_rating)))))
+
+barplot(prop.table(cheap_rating), xlab='Rating',ylab='Frequency',main="Morningstar rating distribution of cheap funds",ylim=range(pretty(c(0,prop.table(cheap_rating)))))
+```
+Test proporcija
+```{r}
+expensive_high_ratings = expensive_rating[["4"]][1] + expensive_rating[["5"]][1]
+expensive_collective = expensive_rating[["1"]][1] + expensive_rating[["2"]][1] + expensive_rating[["3"]][1] + expensive_rating[["4"]][1] + expensive_rating[["5"]][1]
+expensive_high_ratings
+expensive_collective
+
+cheap_high_ratings = cheap_rating[["4"]][1] + cheap_rating[["5"]][1]
+cheap_collective = cheap_rating[["1"]][1] + cheap_rating[["2"]][1] + cheap_rating[["3"]][1] + cheap_rating[["4"]][1] + cheap_rating[["5"]][1]
+cheap_high_ratings
+cheap_collective
+
+rating_proportions <- c(cheap_high_ratings,expensive_high_ratings)
+rating_sum <- c(cheap_collective,expensive_collective)
+prop.test(rating_proportions,rating_sum, alt="greater")
+```
+
+Odbacujemo hipotezu H_0 da su proporcije visoko rangiranih fondova jednake kod skupljih i jeftinijih fondova. Možemo zaključiti da jeftiniji fondovi imaju veću proporciju visoko rangiranih fondova.
+
+
+
+Sada možemo istražiti povezanost cijene i uspjeha pomoću linearne regresije.
+
+
+Prvo scatter plotove
+
+```{r scatter plots}
+
+plot(mutual_funds_outliers$net_annual_expense_ratio_fund,mutual_funds_outliers$success)
+
+```
+
+
+Zatim radimo regresijski model
+
+```{r regresija}
+fit.expense = lm(success~net_annual_expense_ratio_fund, data = mutual_funds_outliers)
+
+plot(mutual_funds_outliers$net_annual_expense_ratio_fund,mutual_funds_outliers$success)
+lines(mutual_funds_outliers$net_annual_expense_ratio_fund,fit.expense$fitted.values,col='red')
+```
+
+Nagib pravca nam daje potvrđuje pretpostavku. Potrebno je analizirati pretpostavke modela
+
+Prvo analiziramo normalnost reziduala
+
+```{r res}
+
+selected.model = fit.expense
+require(e1071)
+kurtosis(selected.model$residuals)
+
+plot(selected.model$residuals) #gledajuci reziduale na ovaj nacin tesko je suditi o normalnosti
+
+#histogram je vrlo interpretativan
+hist((selected.model$residuals))
+hist(rstandard(selected.model))
+
+#q-q plot reziduala s linijom normalne distribucije
+qqnorm(rstandard(selected.model))
+qqline(rstandard(selected.model))
+
+plot(selected.model$fitted.values,selected.model$residuals) #reziduale je dobro prikazati u ovisnosti o procjenama modela
+
+
+#KS test na normalnost 
+ks.test(rstandard(fit.expense),'pnorm')
+
+require(nortest)
+lillie.test(rstandard(fit.expense))
+
+summary(fit.expense)
+```
+Idemo probati višestruku regresiju s parametrima net_assets i expense_fund
+
+```{r cor}
+
+cor(mutual_funds_outliers$net_annual_expense_ratio_fund,mutual_funds_outliers$net_assets)
+
+```
+
+Nema korelacije pa mozemo nastaviti dalje
+
+```{r visestruka regresija}
+fit.multi = lm(success ~ net_annual_expense_ratio_fund + net_assets, mutual_funds_outliers)
+
+selected.model = fit.multi
+
+
+plot(selected.model$residuals) #gledajuci reziduale na ovaj nacin tesko je suditi o normalnosti
+
+#histogram je vrlo interpretativan
+hist((selected.model$residuals))
+hist(rstandard(selected.model))
+
+#q-q plot reziduala s linijom normalne distribucije
+qqnorm(rstandard(selected.model))
+qqline(rstandard(selected.model))
+
+plot(selected.model$fitted.values,selected.model$residuals) #reziduale je dobro prikazati u ovisnosti o procjenama modela
+
+
+#KS test na normalnost 
+ks.test(rstandard(fit.multi),'pnorm')
+
+require(nortest)
+lillie.test(rstandard(fit.multi))
+
+summary(fit.multi)
+
+```
+
+Ne mozemo ni visestruku regresiju.
+
+
+Idemo probati neke kategorijske podatke? Mozda stil investiranja utjece na uspjeh.
+
+```{r kategorijske ulazne varijable - sirove}
+
+boxplot(success~investment,data=mutual_funds_outliers) #kvadratni dijagram se moze koristiti za graficki provjeriti linearnost efekta kategorijske varijable na neku izlaznu varijablu
+
+
+
+fit.investment = lm(success ~ investment, mutual_funds_outliers)
+lillie.test(rstandard(fit.investment))
+summary(fit.investment)
+
+```
+
+Ni to nam bas nema smisla
+
+```{r kategorijske ulazne varijable - dummy varijable}
+
+require(fastDummies)
+mutual_funds_outliers_dummies = dummy_cols(mutual_funds_outliers,select_columns='investment')
+
+
+#procjena modela s dummy varijablama
+
+
+fit.investment.dummy = lm(success ~ net_annual_expense_ratio_fund + net_assets + investment_Blend + investment_Growth + investment_Value, mutual_funds_outliers_dummies)
+
+qqnorm(rstandard(fit.investment.dummy))
+qqline(rstandard(fit.investment.dummy))
+
+summary(fit.investment.dummy)
+
+```
+
+Nista od toga ne valja
+
+Probat mozda P/E ratio
+
+```{r regresija 2}
+fit.pe = lm(success~price_earnings, data = mutual_funds_outliers)
+
+plot(mutual_funds_outliers$price_earnings,mutual_funds_outliers$success)
+lines(mutual_funds_outliers$price_earnings,fit.pe$fitted.values,col='red')
+
+```
+Analiziramo reziduale
+
+```{r pe}
+
+selected.model = fit.pe
+
+
+plot(selected.model$residuals) #gledajuci reziduale na ovaj nacin tesko je suditi o normalnosti
+
+#histogram je vrlo interpretativan
+hist((selected.model$residuals))
+hist(rstandard(selected.model))
+
+#q-q plot reziduala s linijom normalne distribucije
+qqnorm(rstandard(selected.model))
+qqline(rstandard(selected.model))
+
+plot(selected.model$fitted.values,selected.model$residuals) #reziduale je dobro prikazati u ovisnosti o procjenama modela
+
+
+#KS test na normalnost 
+ks.test(rstandard(fit.pe),'pnorm')
+
+require(nortest)
+lillie.test(rstandard(fit.pe))
+
+summary(fit.pe)
+
+```
+
+```{r cor 2}
+
+cor(cbind(mutual_funds_outliers$net_annual_expense_ratio_fund, mutual_funds_outliers$net_assets, mutual_funds_outliers$price_earnings))
+
+```
+
+
+```{r visestruka regresija opet}
+fit.multi = lm(success ~ net_annual_expense_ratio_fund + price_earnings, mutual_funds_outliers)
+
+selected.model = fit.multi
+
+
+plot(selected.model$residuals) #gledajuci reziduale na ovaj nacin tesko je suditi o normalnosti
+
+#histogram je vrlo interpretativan
+hist((selected.model$residuals))
+hist(rstandard(selected.model))
+
+#q-q plot reziduala s linijom normalne distribucije
+qqnorm(rstandard(selected.model))
+qqline(rstandard(selected.model))
+
+plot(selected.model$fitted.values,selected.model$residuals) #reziduale je dobro prikazati u ovisnosti o procjenama modela
+
+
+#KS test na normalnost 
+ks.test(rstandard(fit.multi),'pnorm')
+
+require(nortest)
+lillie.test(rstandard(fit.multi))
+
+summary(fit.multi)
+
+```
+
+Ni ovo nema bas nekog smisla
