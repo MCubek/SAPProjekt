@@ -29,94 +29,81 @@ Ispis svih atributa.
 names(mutual_funds)
 ```
 
-Selekcija atributa bitnih za ovu analizu.
-Imovina pod upravljanje je atribut net_assets.
+Selekcija bitnih atributa.
+Veličinu fonda odrediti ćemo atributom net_assets ili imovinom pod upravljanje.
 ```{r}
-mutual_funds <- select(mutual_funds, c("fund_name", "net_assets", "category", "net_annual_expense_ratio_fund", "net_annual_expense_ratio_category", "fund_return_10years", "category_return_10years", "morningstar_rating"))
-dim(mutual_funds)
+mutual_funds_bySize <- select(mutual_funds, c("fund_name", "net_assets", "category", "net_annual_expense_ratio_fund", "net_annual_expense_ratio_category", "fund_return_10years", "category_return_10years", "morningstar_rating"))
+dim(mutual_funds_bySize)
 ```
 
+Kratka statistika varijabli
 ```{r}
-summary(mutual_funds)
+summary(mutual_funds_bySize)
 
-sapply(mutual_funds, class)
+sapply(mutual_funds_bySize, class)
 ```
 
-Pretvoriti morningstar rating u kategorijsku varijablu iz integera.
-Ispisati sve fondove sa morningstar ratingom od 0.
-Izbaciti sve fondove sa morningstar ratingom od 0.
+Morningstar rating pretvaramo u kategorijsku varijablu
+Ispistati ćemo i izbaciti sve fondove sa morningstar ratingom od 0 jer on predstavlja nepostojeću vrijednost, a morningstar rating koristimo kao jednu od dvije metrike za uspješnost.
 ```{r}
-mutual_funds$morningstar_rating <- as.factor(mutual_funds$morningstar_rating)
-mutual_funds[mutual_funds$morningstar_rating == 0,]
-mutual_funds <- subset(mutual_funds, mutual_funds$morningstar_rating != 0)
+mutual_funds_bySize$morningstar_rating <- as.factor(mutual_funds_bySize$morningstar_rating)
+mutual_funds_bySize[mutual_funds_bySize$morningstar_rating == 0,]
+mutual_funds_bySize <- subset(mutual_funds_bySize, mutual_funds_bySize$morningstar_rating != 0)
 ```
-Ispisati sve fondove bez net_assets vrijednosti i ukloniti ih iz dataseta.
+
+Ispisati ćempo sve fondove bez net_assets vrijednosti i ukloniti ih iz dataseta.
 Net_assets nam treba za odredivajne velicine fonda.
 ```{r}
-mutual_funds[is.na(mutual_funds$net_assets),]
-mutual_funds <- subset(mutual_funds, !is.na(mutual_funds$net_assets))
+mutual_funds_bySize[is.na(mutual_funds_bySize$net_assets),]
+mutual_funds_bySize <- subset(mutual_funds_bySize, !is.na(mutual_funds_bySize$net_assets))
 ```
 
-Tražimo nepoznate podatke
-```{r}
-imaNedostajucih <- 0
-for (col_name in names(mutual_funds)) {
-  if (sum(is.na(mutual_funds[, col_name])) > 0) {
-    cat('Ukupno nedostajućih vrijednosti za varijablu ', col_name, ': ', sum(is.na(mutual_funds[, col_name])), '\n')
-    imaNedostajucih <- 1
-  }
-}
-
-if (!imaNedostajucih) {
-  cat("Nema nedostajucih podataka")
-}
-
-cat('\nDimenzija podataka: ', dim(mutual_funds))
-```
-Pregled podataka podataka.
+Pregled podataka fondova.
+Net fund return u 10 godina i net category return u 10 godina koristimo ra računanje uspješnosti fonda.
+Uspješnost definiramo kao fund return kao njihovu razliku.
 ```{r, fig.width = 14, fig.height=5}
-hist(mutual_funds$net_annual_expense_ratio_fund, main = 'Net annual expense ratio fund[%]', xlab = 'Expense ratio', ylab = 'Frequency')
-hist(mutual_funds$net_annual_expense_ratio_category, main = 'Net annual expense ratio of category[%]', xlab = 'Expense ratio', ylab = 'Frequency')
-hist(mutual_funds$fund_return_10years, main = 'Fund return in 10 years[%]', xlab = 'Return', ylab = 'Frequency')
-hist(mutual_funds$category_return_10years, main = 'Category return in 10 years[%]', xlab = 'Return', ylab = 'Frequency')
+hist(mutual_funds_bySize$fund_return_10years, main = 'Fund return in 10 years [%]', xlab = 'Return', ylab = 'Frequency')
+hist(mutual_funds_bySize$category_return_10years, main = 'Category return in 10 year s[%]', xlab = 'Return', ylab = 'Frequency')
 
-mutual_funds <- mutual_funds %>% mutate(success = fund_return_10years - category_return_10years)
+mutual_funds_bySize <- mutual_funds_bySize %>% mutate(success = fund_return_10years - category_return_10years)
 
-hist(mutual_funds$success, main = 'Rate of success[%]', xlab = 'Success', ylab = 'Frequency', breaks = 20)
-dim(mutual_funds)
+hist(mutual_funds_bySize$success,probability = T, main = 'Rate of success [%]', xlab = 'Success', ylab = 'Frequency', breaks = 20)
+lines(density(mutual_funds_bySize$success),col = 2)
 ```
 
-Provjerimo kategorijski podatak morningstar rating.
+Analiza kategorijskog podatka morningstar rating.
 ```{r, fig.width = 14, fig.height=5}
-barplot(summary(mutual_funds$morningstar_rating),main='Morningstar rating')
+barplot(summary(mutual_funds_bySize$morningstar_rating), main='Morningstar rating')
 ```
 
-Podjela na velike i male fondove
-
+Podjela na velike i male fondove gdje granicu izmedu njihove veličine definiramo kao medijan varijable net_assets.
 ```{r, fig.width = 14, fig.height=5}
-median <- median(mutual_funds$net_assets)
-mutual_funds_large <- mutual_funds[mutual_funds$net_assets > median,]
-mutual_funds_small <- mutual_funds[mutual_funds$net_assets <= median,]
+median <- median(mutual_funds_bySize$net_assets)
+mutual_funds_large <- mutual_funds_bySize[mutual_funds_bySize$net_assets > median,]
+mutual_funds_small <- mutual_funds_bySize[mutual_funds_bySize$net_assets <= median,]
 summary(mutual_funds_large)
 cat("\n")
 summary(mutual_funds_small)
 ```
 
-Jesu li veći fondovi uspješniji od manjih?
+Razlika srednjih vrijednosti velikih i malih fondova.
+Uspoređujemo izračunatu srednju vrijednost vrijednost ocjene i morning star vrijednosta.
 ```{r}
-cat('Prosječni uspjeh većih fondova iznosi  ', mean(mutual_funds_large$success),'\n')
-cat('Prosječni uspjeh manjih fondova iznosi  ', mean(mutual_funds_small$success),'\n')
+cat('Prosječni izračunati uspjeh većih fondova iznosi  ', mean(mutual_funds_large$success),'\n')
+cat('Prosječni izračunati uspjeh manjih fondova iznosi  ', mean(mutual_funds_small$success),'\n')
 require(modeest)
-cat('Prosječni rating većih fondova iznosi  ', mfv(mutual_funds_large$morningstar_rating),'\n')
-cat('Prosječni rating manjih fondova iznosi  ', mfv(mutual_funds_small$morningstar_rating),'\n')
+cat('Prosječni morningstar rating većih fondova iznosi  ', mfv(mutual_funds_large$morningstar_rating),'\n')
+cat('Prosječni morningstar rating manjih fondova iznosi  ', mfv(mutual_funds_small$morningstar_rating),'\n')
 ```
 
+Grafučki prikaz uspješnosti kroz izračunatu vrijednost za male i velike fondove kroz boxplot.
 ```{r}
 boxplot(mutual_funds_large$success, mutual_funds_small$success,
         names = c('Large fund success','Small fund success'),
         main='Boxplot of large and small fund success rate')
 ```
 
+Histogram za uspjeh velikih i malih fondova.
 ```{r}
 hist(mutual_funds_large$success,
      breaks = 20,
@@ -128,6 +115,7 @@ hist(mutual_funds_small$success,
      xlab='Success rate')
 ```
 
+QQ Plot uspješnosti velikih i malih fondova.
 ```{r}
 qqnorm(mutual_funds_large$success, pch = 1, frame = FALSE,main='Large funds')
 qqline(mutual_funds_large$success, col = "steelblue", lwd = 2)
@@ -135,52 +123,64 @@ qqline(mutual_funds_large$success, col = "steelblue", lwd = 2)
 qqnorm(mutual_funds_small$success, pch = 1, frame = FALSE,main='Small funds')
 qqline(mutual_funds_small$success, col = "steelblue", lwd = 2)
 ```
-Zbog velike količine podataka pretpostavljamo normalnost?
+Zbog velike količine podataka pretpostavljamo normalnost.
 
-Varijance
+
+Provjera normalnosti.
+```{r}
+library(nortest)
+lillie.test(mutual_funds_bySize$success)
+```
+Test nam ukazuje da odbacujemo H0 -> pretpostavku da je normalno distribuirano.
+
+Varijance velikih i malih fondova
 ```{r}
 var(mutual_funds_large$success)
 var(mutual_funds_small$success)
 ```
 
-Usporedba jednakosti varijanci
+Usporedba jednakosti varijanci.
 ```{r}
 var.test(mutual_funds_large$success, mutual_funds_small$success)
 ```
+Odbacujemo pretpostavku H0 -> da su varijance jednake.
 
-P vrijednost pokazuje da odbacujemo pretpostavku H0 da su varijance jednake.
 
-Koristimo t test.
+Koristimo t test s razlicitim varijancama.
 ```{r}
 t.test(mutual_funds_large$success, mutual_funds_small$success, alt = "greater", var.equal = FALSE)
 ```
-
-Moćemo reći da su veći fondovi prosječno uspješniji.
+Test nam govori da su veći fondovi prosječno uspješniji.
 
 
 Usporedba po morningstar ratingu.
 
+Tablica svih fondova po morningstar ocjeni.
 ```{r}
-levels(mutual_funds$morningstar_rating)
-table(mutual_funds$morningstar_rating)
+levels(mutual_funds_bySize$morningstar_rating)
+table(mutual_funds_bySize$morningstar_rating)
 ```
+
+Tablica malih i velikih fondova po morningstar ocjeni.
 ```{r}
 table(mutual_funds_large$morningstar_rating)
 table(mutual_funds_small$morningstar_rating)
 ```
 
+Isti podaci prikazani barplotom.
 ```{r, fig.width = 14, fig.height=5}
 barplot(summary(mutual_funds_large$morningstar_rating),main='Morningstar rating for large funds')
 barplot(summary(mutual_funds_small$morningstar_rating),main='Morningstar rating for small funds')
 ```
 
-
+Tablica sa postocima.
 ```{r}
 large_rating <- table(mutual_funds_large$morningstar_rating)
 small_rating <-table(mutual_funds_small$morningstar_rating)
-round(prop.table(large_rating),digits=2)
-round(prop.table(small_rating),digits=2)
+round(prop.table(large_rating),digits=3)
+round(prop.table(small_rating),digits=3)
 ```
+Barchart po postocima.
 ```{r, fig.width = 14, fig.height=5}
 barplot(prop.table(large_rating), xlab='Rating',ylab='Frequency',main="Morningstar rating distribution of large funds",ylim=range(pretty(c(0,prop.table(large_rating)))))
 
@@ -203,22 +203,23 @@ rating_proportions <- c(large_high_ratings,small_high_ratings)
 rating_sum <- c(large_collective,small_collective)
 prop.test(rating_proportions,rating_sum, alt="greater")
 ```
-
-Odbacujemo H0, hipotezu da su proporcije visoko rangiranih jednake kod većih i manjih fondova.
+Odbacujemo H0 -> hipotezu da su proporcije visoko rangiranih jednake kod većih i manjih fondova.
 Veći fondovi imaju veću proporciju visoko rangiranih fondova nego mali.
 
 
+Pokusaj s linearnom regresijom,
+
 Grafički prikaz odnosa uspješnosti računate na prvi način i veličine fonda.
 ```{r}
-plot(mutual_funds$net_assets,mutual_funds$success)
+plot(mutual_funds_bySize$net_assets, mutual_funds_bySize$success)
 ```
 
 Linearni model metrike uspjeha i veličine fonda
 ```{r}
-fit.size <- lm(success~net_assets, data=mutual_funds)
+fit.size <- lm(success~net_assets, data=mutual_funds_bySize)
 
-plot(mutual_funds$net_assets,mutual_funds$success)
-lines(mutual_funds$net_assets,fit.size$fitted.values,col='red')
+plot(mutual_funds_bySize$net_assets, mutual_funds_bySize$success)
+lines(mutual_funds_bySize$net_assets, fit.size$fitted.values, col='red')
 ```
 Nagib pravca pokazuje blagu ovisnost o veličini fonda na njegov uspjeh. Kako bi se dobiveni model analizirao potrebno je provjeriti da pretpostavke narušene. Pritom su najbitnije pretpostavke o regresorima  i o rezidualima.
 
@@ -247,7 +248,6 @@ require(nortest)
 lillie.test(rstandard(fit.size))
 
 ```
-NEKI TEKST
 
 Analiza modela
 
@@ -256,4 +256,3 @@ Analiza modela
 summary(fit.size)
 
 ```
-STO TU VIDIMO?
