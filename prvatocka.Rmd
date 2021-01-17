@@ -17,13 +17,8 @@ mutual_funds <- read.csv("C:/Users/Marino PC/Desktop/sve/SAP projekt/mutual_fund
 
 
 ## Stilovi investiranja
-
-<<<<<<< Updated upstream
-Growth, value i blend su tri stila investiranja kojima ćemo se baviti u ovom projektu. Za početak ćemo pojasniti što točno znači pojedini stil investiranja. 
-=======
-Growth, value i blend su tri stila investiranja kojima ćemo usporediti u ovom projektu.
->>>>>>> Stashed changes
-Growth fondovi ulažu u dionice firmi za koje se predpostavlja veliki rast, međutim oni imaju veći izloženost riziku jer imaju veću toleraniciju na rizika i spremni su "parkirati" fond u neke dionice zbog očekivanog rasta u budućnosti.
+Growth, value i blend su tri stila investiranja koje ćemo usporediti u ovom projektu.
+Growth fondovi ulažu u dionice firmi za koje se predpostavlja veliki rast.
 Value fondovi investiraju u dionice čija je tržišna vrijednost ispod stvarne, odnosno u podcjenjene firme.
 Blend investiranje je investiranje u različite dionice iz istog razreda, npr. S&P500. Možemo ih smatrati kombinaciom value i growth investiranja.
 ```{r fig.height=3.5, fig.width=5, echo=FALSE}
@@ -151,7 +146,6 @@ Kako bih saznali koji stil investiranja daje najbolje rezultate testirati čemo 
 
 ## Testiranje
 
-
 ```{r echo=FALSE, include=FALSE}
 growth_1years <- c(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_1year))
 value_1years <- c(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_1year))
@@ -186,6 +180,7 @@ summary(value_10years)
 summary(blend_10years)
 
 ```
+
 ```{r echo=FALSE}
 
 boxplot(growth_1years, value_1years, blend_1years,
@@ -204,10 +199,6 @@ boxplot(growth_10years, value_10years, blend_10years,
         names = c('Growth 10 god','Value 10 god', 'Blend 10 god'),
         main='10-o godišnji povrati')
 ```
-<<<<<<< Updated upstream
-Provjera normalnosti podataka
-```{r}
-=======
 
 
 Prvo testiramo jednakos povrata strategija investiranja Kruskal-Wallis-ovim testom 
@@ -226,7 +217,6 @@ Sada čemo testirati koji stil investiranja ima največi povrat.
 
 Provjera normalnosti podataka
 ```{r include=FALSE, include=FALSE}
->>>>>>> Stashed changes
 hist(growth_1years,
      breaks = 20,
     main = 'Histogram povrata Growth 1',
@@ -341,14 +331,10 @@ lillie.test(growth_10years)
 lillie.test(blend_10years)
 lillie.test(value_10years)
 ```
-<<<<<<< Updated upstream
-Jednakost varijance
-=======
 
 Kooristimo neparametarski Mann-Whitney-Wilcoxov test jer su pretpostavke normalnosti narušene.
 
 
->>>>>>> Stashed changes
 ```{r fig.height=3.5, fig.width=5, echo=FALSE}
 wilcox.test(growth_1years, blend_1years, alternative = "greater")
 wilcox.test(growth_1years, value_1years, alternative = "greater")
@@ -547,19 +533,10 @@ wilcox.test(blend_10years_sharp, value_10years_sharp, alternative = "greater")
 
 
 ```
-Na temelju p-vrijednosti danih t-testova zaključujemo sljedeće:
+Na temelju p-vrijednosti danih testova zaključujemo sljedeće:
 
 Growth je ostao najbolji stil investiranja kada gledamo sharp ratio fondova, a jedina razlika je to što je 10-godišnji sharp ratio za Value i Blend strategiju jednak
 
-Na temelju t-testova možemo zaključiti sljedeće:
-Growth investiranje ima najveći povrat za sve testirane podatke, sljedeći najbolji stil investiranja je blend iako za 10-godišnje povrate na razini signifikantnosti 5% možemo reči da blend i value investiranje imaju jednak povrat.
-
-<<<<<<< Updated upstream
-
-## Povrat fondova ovisno o stilu investiranja ako uzmemo i rizik u obzir
-Utvrdili smo koji stil investiranja je najbolji ako uzmemo u obzir samo povrat fondova, međutim tada zanemarujemo rizik koji određeni stil investiranja donosi sa sebom.
-Sada čemo testirati povrat fonda ako uzmemo u obzir i rizik. Varijabla koju ćemo koristiti je sharp ratio jer ona dosta dobro prikazuje povrat fonda nasprem rizika. Sharp ratio je omjer povrata fonda i standardne devijacije
-=======
 ## Je li velicina firmi u koje fonda investira neovisna o tome koju stil investiranja koristi fond
 
 Sada kad smo ustanovili koji stil investiranja je najbolji, želimo vidjeti postoji li zavisnost između veličine firmi u koje fond investira i stilu investiranja koji koristi fond.
@@ -689,7 +666,6 @@ summary(fit.price_earnings)
 summary(fit.price_sales)
 ```
 
->>>>>>> Stashed changes
 
 ## Postoji li razlika u povratima fondova s obzirom na kategoriju fonda
 
@@ -731,43 +707,7 @@ lillie.test(rstandard(fit.multi.1))
 
 ```
 
-```{r}
 
-boxplot(fund_return_3years ~ category, data=mutual_funds[mutual_funds$category %in% categories,])
-
-<<<<<<< Updated upstream
-qqnorm(growth_10years_sharp,pch=1,frame=FALSE,main='Growth 10')
-qqline(growth_10years_sharp,col='steelblue',lwd=2)
-qqnorm(blend_10years_sharp,pch=1,frame=FALSE,main='Blend 10')
-qqline(blend_10years_sharp,col='steelblue',lwd=2)
-qqnorm(value_10years_sharp,pch=1,frame=FALSE,main='Value 10')
-qqline(value_10years_sharp,col='steelblue',lwd=2)
-```
-Pretpostavke t-testa su zadovoljene, testiranje jednakosti varijance:
-```{r fig.height=3.5, fig.width=5, echo=FALSE}
-print('Growth Blend 3')
-var(growth_3years_sharp)
-var(blend_3years_sharp)
-var.test(growth_3years_sharp,blend_3years_sharp)
-print('Growth Value 3')
-var(growth_3years_sharp)
-var(value_3years_sharp)
-var.test(growth_3years_sharp,value_3years_sharp)
-print('Value Blend 3')
-var(value_3years_sharp)
-var(blend_3years_sharp)
-var.test(value_3years_sharp,blend_3years_sharp)
-=======
-
-fit.multi.1 = lm(fund_return_3years ~ category, mutual_funds[mutual_funds$category %in% categories1,])
-summary(fit.multi.1)
->>>>>>> Stashed changes
-
-
-
-
-<<<<<<< Updated upstream
-T-test
 ```{r fig.height=3.5, fig.width=5, echo=FALSE}
 print('Growth Blend 3')
 t.test(growth_3years_sharp, blend_3years_sharp,alt="greater",var.equal = TRUE)
@@ -775,11 +715,11 @@ print('Growth Value 3')
 t.test(growth_3years_sharp, value_3years_sharp, alt="greater", var.equal = FALSE)
 print('Blend Value 3')
 t.test(blend_3years_sharp, value_3years_sharp, alt="greater", var.equal = FALSE)
-=======
+
 selected.model = fit.multi.1
 
 plot(selected.model$residuals)
->>>>>>> Stashed changes
+
 
 hist((selected.model$residuals))
 hist(rstandard(selected.model))
@@ -795,198 +735,6 @@ ks.test(rstandard(fit.multi.1),'pnorm')
 lillie.test(rstandard(fit.multi.1))
 
 ```
-Na temelju p-vrijednosti danih t-testova zaključujemo sljedeće:
-
-Growth je ostao najbolji stil investiranja kada gledamo sharp ratio fondova, zapravo jedina razlika nasprem testiranja čistih povrata fondova je to što na razini signifikantnosti 1% zaključujemo da je blend i value investiranje jednako za 10-godišnji sharp ratio i 3-godišni sharp ratio.
-
-
-## Je li velicina firmi u koje fonda investira neovisna o tome koju stil investiranja koristi fond
-
-Sada kad smo ustanovili koji stil investiranja je najbolji, želimo vidjeti postoji li zavisnost između veličine firmi u koje fond investira i stilu investiranja koji koristi fond.
-
-Veličine firme koje se pojavljuju u podacima su sljedece:
-```{r}
-table(mutual_funds$size)
-
-```
-
-Undefined podatke nećemo koristiti, te nam onda preostaje 3 varijable: Large, Medium i Small
-
-Kopiranje podataka kako ne bi promijenili prave vrijednosti
-```{r fig.height=3.5, fig.width=5, echo=FALSE}
-
-mutual_funds_copy = data.frame(mutual_funds)
-tracemem(mutual_funds)==tracemem(mutual_funds_copy)
-untracemem(mutual_funds_copy)
-untracemem(mutual_funds_copy)
-mutual_funds_copy['investment'] <- sapply(mutual_funds_copy['investment'], as.character)
-mutual_funds_copy['size'] <- sapply(mutual_funds_copy['size'], as.character)
-```
-
-
-Napravimo kontigencijsku tablicu i dodamo sume redaka i stupaca 
-```{r fig.height=3.5, fig.width=5, echo=FALSE}
-
-tbl = table(mutual_funds_copy[mutual_funds_copy$investment == 'Blend' 
-                      | mutual_funds_copy$investment == 'Growth' 
-                      | mutual_funds_copy$investment == 'Value',]$investment, 
-            mutual_funds_copy[mutual_funds_copy$investment == 'Blend' 
-                      | mutual_funds_copy$investment == 'Growth' 
-                      | mutual_funds_copy$investment == 'Value',]$size)
-tbl
-
-
-added_margins_tbl = addmargins(tbl)
-print(added_margins_tbl)
-```
-
-
-Provjerimo jesu li zadovoljene pretpostavke testa, a pretpostavke su da očeivana frekvencija pojedinog razreda mora biti veća ili jednaka 5
-```{r, echo=FALSE}
-
-for (col_names in colnames(added_margins_tbl)){
-  for (row_names in rownames(added_margins_tbl)){
-    if (!(row_names == 'Sum' | col_names == 'Sum') ){
-      cat('Očekivane frekvencije za razred ',col_names,'-',row_names,': ',(added_margins_tbl[row_names,'Sum'] * added_margins_tbl['Sum',col_names]) / added_margins_tbl['Sum','Sum'],'\n')
-    }
-  }
-}
-```
-
-Pretpostavke su zadovoljene, možemo provesti test
-
-
-```{r}
-chisq.test(tbl,correct=F)
-```
-Na temelju male p-vrijednoti odbacijemo hipotezu H0 i zaključujemo da je veličina firmi u koju fond ulaže zavosno o stilu investiranja koje fond koristi
-
-
-
-## Povrat ovisno o price/book, price/cashflow, price/earnings i price/sales ratio
-
-```{r fig.height=4.5, fig.width=4.5, echo=FALSE}
-removeCol <- function(data, desiredCols){
-  completeVec <- complete.cases(data[, desiredCols])
-  return(data[completeVec, ])
-}
-## Uklananje praznih redova
-last_year = removeCol(mutual_funds, "ytd_return")
-
-plot(mutual_funds$price_book, mutual_funds$ytd_return)
-plot(mutual_funds$price_cashflow, mutual_funds$ytd_return)
-plot(mutual_funds$price_earnings, mutual_funds$ytd_return)
-plot(mutual_funds$price_sales, mutual_funds$ytd_return)
-
-fit.price_book = lm(ytd_return ~ price_book, data = last_year)
-fit.price_cashflow = lm(ytd_return ~ price_cashflow, data = last_year)
-fit.price_earnings = lm(ytd_return ~ price_earnings, data = last_year)
-fit.price_sales = lm(ytd_return ~ price_sales, data = last_year)
-
-plot(last_year$price_book, last_year$ytd_return)
-lines(last_year$price_book,fit.price_book$fitted.values,col='red')
-
-plot(last_year$price_cashflow, last_year$ytd_return)
-lines(last_year$price_cashflow,fit.price_cashflow$fitted.values,col='red')
-
-plot(last_year$price_earnings, last_year$ytd_return)
-lines(last_year$price_earnings,fit.price_earnings$fitted.values,col='red')
-
-plot(last_year$price_sales, last_year$ytd_return)
-lines(last_year$price_sales,fit.price_sales$fitted.values,col='red')
-```
-
-
-##Normalnost reziduala i homogenost varijance
-
-
-Nagibt pravca postoji ali nije velik. Kako bi analizirali model prvo moramo provjeriti da pretpostavke modela nisu narušene, tj. normalnost reziduala i homogenost varijance.
-```{r}
-selected.model = fit.price_book
-
-plot(selected.model$residuals)
-
-hist((selected.model$residuals))
-hist(rstandard(selected.model))
-## Distribucija dosta nalikuje normalnoj
-
-qqnorm(rstandard(selected.model))
-qqline(rstandard(selected.model))
-
-plot(selected.model$fitted.values, selected.model$residuals)
-
-require(nortest)
-ks.test(rstandard(fit.price_book),'pnorm')
-lillie.test(rstandard(fit.price_book))
-```
-
-
-Normalnost reziduala i homogenost varijance
-```{r fig.height=3.5, fig.width=5, echo=FALSE}
-summary(fit.price_book)
-summary(fit.price_cashflow)
-summary(fit.price_earnings)
-summary(fit.price_sales)
-```
-
-```{r}
-boxplot(fund_return_3years ~ category, data=mutual_funds[mutual_funds$category %in% categories,])
-
-
-fit.multi.1 = lm(fund_return_3years ~ category, mutual_funds[mutual_funds$category %in% categories1,])
-summary(fit.multi.1)
-
-
-
-
-selected.model = fit.multi.1
-
-plot(selected.model$residuals)
-
-hist((selected.model$residuals))
-hist(rstandard(selected.model))
-## Distribucija dosta nalikuje normalnoj
-
-qqnorm(rstandard(selected.model))
-qqline(rstandard(selected.model))
-
-plot(selected.model$fitted.values, selected.model$residuals)
-
-require(nortest)
-ks.test(rstandard(fit.multi.1),'pnorm')
-lillie.test(rstandard(fit.multi.1))
-
-```
-
-```{r}
-boxplot(fund_return_3years ~ category, data=mutual_funds[mutual_funds$category %in% categories,])
-
-
-fit.multi.1 = lm(fund_return_3years ~ category, mutual_funds[mutual_funds$category %in% categories1,])
-summary(fit.multi.1)
-
-
-
-
-selected.model = fit.multi.1
-
-plot(selected.model$residuals)
-
-hist((selected.model$residuals))
-hist(rstandard(selected.model))
-## Distribucija dosta nalikuje normalnoj
-
-qqnorm(rstandard(selected.model))
-qqline(rstandard(selected.model))
-
-plot(selected.model$fitted.values, selected.model$residuals)
-
-require(nortest)
-ks.test(rstandard(fit.multi.1),'pnorm')
-lillie.test(rstandard(fit.multi.1))
-
-```
-
 
 
 
