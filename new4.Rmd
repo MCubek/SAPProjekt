@@ -5,6 +5,8 @@ output: html_notebook
 
 ## 4 Analiza kategorija
 
+U nastavku ćemo promatrati kategorije fondova.
+
 ### 4.1 Učitavanje i pregled podata
 
 Učitajmo podatke i prikažimo dataset.
@@ -31,7 +33,7 @@ library(ggplot2)
 ggplot(mutual_funds, aes(category)) + geom_bar(fill = "#0073C2FF") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
-Pogledajmo prosjecnu vrijednost povrata fondova naspram kategorije kojoj oni pripadaju za povrat od 10 godina.
+Pogledajmo prosječnu vrijednost povrata fondova naspram kategorije kojoj oni pripadaju za povrat od 10 godina.
 ```{r}
 cat_ytd = do.call(data.frame, aggregate(cbind(fund_return_10years, category_return_10years)~category, mutual_funds, FUN = function(x) c(Mean = mean(x))))
 
@@ -44,7 +46,7 @@ legend(x = "topleft", y=0.85, legend = c("Fondovi", "Kategorije"), col = c("blue
 
 ```
 
-Promotrimo kako se ponašaju podaci unutar nekih od kategorija. Kako bi imali što bolju reprezentaciju, promatraćemo kategoije sa najviše fondova "Large Growth", "Large Value", "Mid-Cap Growth", "Small Blend" i "Small Growth".
+Promotrimo kako se ponašaju podaci unutar nekih od kategorija. Kako bi imali što bolju reprezentaciju, promatrat ćemo kategorije s najviše fondova "Large Growth", "Large Value", "Mid-Cap Growth", "Small Blend" i "Small Growth". Pogledajmo njihove boxplotove i distribuciju:
 
 ```{r}
 
@@ -86,7 +88,7 @@ for (c in cats) {
 }
 ```
 
-Prije nego sto nastavimo rjesimo se kategorija sa malim frekvencijama
+Prije nego što nastavimo resimo se kategorija s malim frekvencijama.
 
 ```{r}
 cats = table(mutual_funds$category)
@@ -95,7 +97,6 @@ to_remove = cats[cats$Freq < 30,]
 cats = cats[cats$Freq >= 30,]
 cats
 
-library(dplyr)
 cat_funds = mutual_funds
 
 for (c in to_remove$Var1) {
@@ -103,9 +104,9 @@ for (c in to_remove$Var1) {
 }
 ```
 
-Pogledajmo u kojim kategorijama fondovi najvise pobjedjuj.
-
-$H_0$ fondovi ne pobjedjuju kategorije.
+Pogledajmo u kojim kategorijama fondovi najviše pobjeđuj.
+Odrat ćemo t-test za svaku kategoriju i prikazati procenat fondova koji su pobijedili svoju kategoriju.
+$H_0$ fondovi ne pobjeđuju kategorije.
 
 ```{r}
 testovi = data.frame()
@@ -124,16 +125,14 @@ testovi
 
 y10t = testovi[testovi$p10years < 0.05,]
 
-p = nrow(y10t) / nrow(testovi)
+p = nrow(y10t) / nrow(testovi) * 100
 cat("Procenat fondova koji pobjedjuju kategoriju", p)
 ```
-Analizirali smo svaku kategoriju zasebni i dobili smo da u 12.5% fondovi pobjedjuju svoju kategoriju
+Analizirali smo svaku kategoriju zasebni i dobili smo da u 12.5% fondovi pobjeđuju svoju kategoriju.
 
-## Usporedba fondova koji pobjedjuju katergoiju nasprem onih koji to ne uspijevaju
+## Usporedba fondova koji pobjeđuju kategoriju naspram onih koji to ne uspijevaju
 
-Podijeliti cemo fondove u dvije kategorije, one koji pobjedjuju svoju kategoiju i one koji to ne uspijevaju za povrate u 10 godina
-
-Sada cemo analizirati fondove koji pobjedjuju kategorije.
+Podijeliti ćemo fondove u dvije kategorije, one koji pobjeđuju svoju kategoriju i one koji to ne uspijevaju za povrate u 10 godina.
 
 ```{r}
 manji = cat_funds[cat_funds$fund_return_10years < cat_funds$category_return_10years, ]
@@ -142,19 +141,23 @@ dim(manji)
 dim(veci)
 ```
 
+Prikažimo grafički kategorije što su nam preostale.
+
 ```{r}
 cats = table(veci$category)
 cats = as.data.frame(cats)
 cats
 
-ggplot(veci, aes(category)) + geom_bar(fill = "#0073C2FF") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ggplot(veci, aes(category)) + geom_bar(fill = "#0073C2FF") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + ggtitle("Fondovi koji pobjeđuju kategoriju")
 
 cats = table(manji$category)
 cats = as.data.frame(cats)
 cats
 
-ggplot(manji, aes(category)) + geom_bar(fill = "#0073C2FF") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ggplot(manji, aes(category)) + geom_bar(fill = "#0073C2FF") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + ggtitle("Fondovi koji ne pobjeđuju kategoriju")
 ```
+
+Izdvojimo samo one podatke koji su nam potrebni i prikažimo njihov summary.
 
 ```{r}
 veci = select(veci, c("category", "net_assets", "fund_yield", "morningstar_rating", "inception_date", "investment", "size", "currency", "portfolio_cash", "portfolio_stocks", "portfolio_preferred", "fund_return_10years", "category_return_10years"))
@@ -166,6 +169,8 @@ manji$relative_return = (manji$fund_return_10years - manji$category_return_10yea
 summary(veci)
 summary(manji)
 ```
+
+Prikažimo kako se povrati fonda u 10 godina - povrat kategorija u 10 ponašaju za naše dvije skupine podataka.
 
 ```{r}
 h = hist(veci$relative_return,
@@ -196,32 +201,40 @@ boxplot(veci$relative_return, manji$relative_return,
         main='Boxplot fondova zavisno da li pobjedjuju ili ne svoju kategoriju')
 ```
 
-Pregled morningstar ratinga izmedju fondova koji pobjedjuju i ne pobjedjuju svoju kategoriju.
+Grafički pregled morningstar ratinga između fondova koji pobjeđuju i ne pobjeđuju svoju kategoriju.
 
 ```{r}
-h = hist(veci$morningstar_rating,
-         breaks=seq(min(veci$morningstar_rating)-1,max(veci$morningstar_rating),1),
-         main="Morningstar rating iz svih fondova koji pobjedjuju svoju kategoriju",
+v = veci[veci$morningstar_rating > 0, ]
+m = manji[manji$morningstar_rating > 0, ]
+h = hist(v$morningstar_rating,
+         breaks=seq(min(v$morningstar_rating),max(v$morningstar_rating),1),
+         main="Morningstar rating iz svih fondova koji pobjeđuju svoju kategoriju",
          xlab="povrat",
          ylab='Frequency',
          col="#0073C2FF"
          )
 
-h = hist(manji$morningstar_rating,
-         breaks=seq(min(manji$morningstar_rating)-1,max(manji$morningstar_rating),1),
-         main="Morningstar rating iz svih fondova koji ne pobjedjuju svoju kategoriju",
+h = hist(m$morningstar_rating,
+         breaks=seq(min(m$morningstar_rating),max(m$morningstar_rating),1),
+         main="Morningstar rating iz svih fondova koji ne pobjeđuju svoju kategoriju",
          xlab="povrat",
          ylab='Frequency',
          col="#0073C2FF"
          )
 ```
 
-```{r}
-t.test(veci$morningstar_rating, manji$morningstar_rating, alt = "greater")
-```
-Vidimo da fondovi koji pobjedjuju imaju veci morningstar rating.
+Prema gore odrađenom grafu, možemo primijetiti postoji velika razlika između morningstar ratinga.
 
-Testirajmo da li odabrana strategija ima utjecaj da li ce fond biti uspijesan.
+$H_0$ Morningstar rating fondova koji pobjeđuju svoju kategoriju nije veći od onih koji ne pobjeđuju svoju kategoriju.
+
+```{r}
+t.test(v$morningstar_rating, m$morningstar_rating, alt = "greater")
+```
+Vidimo da naša inicijalna pretpostavka nije bila točna, tj. alternativna hipoteza je točna, fondovi s većim morningstar rating generalno pobjeđuju svoje kategorije više nego oni s manjim.
+
+Testirajmo da li odabrana strategija ima utjecaj da li će fond pobijediti svoju kategoriju.
+
+Pogledajmo kontingencijsku tablicu.
 
 ```{r}
 veci['investment'] <- sapply(veci['investment'], as.character);
@@ -234,6 +247,7 @@ tbl = rbind(veci_invest, manj_invest)
 added_margins_tbl = addmargins(tbl)
 print(added_margins_tbl)
 ```
+Da bi iyvršili test, frekvencija za svaki razred nam mora biti veća ili jednaka 5.
 
 ```{r}
 for (col_names in colnames(added_margins_tbl)){
@@ -244,13 +258,18 @@ for (col_names in colnames(added_margins_tbl)){
   }
 }
 ```
+Sve očekivane frekvencije su veće od 5, možemo nastaviti sa izvršavanjem testa.
+
 ```{r}
 chisq.test(tbl,correct=F)
 ```
-Vidimo da nam odabrana strategija govori koja fond pobjedjuje kategoriju.
+Vidimo da nam odabrana strategija govori koji fond pobjeđuje kategoriju.
 
 
 ## Pregled fondova koji pobjedjuju svoju kategoriju
+
+Prikažimo scatterplot kako bi smo promotrili utjecaj samo jedne nezavisne varijable X na neku zavisnu varijablu Y.
+Promatrajmo utjecaj varijabli price_book, price_sales i price_cashflow na varijablu price_earnings.
 
 ```{r}
 grt = cat_funds[cat_funds$fund_return_10years > cat_funds$category_return_10years, ]
@@ -260,7 +279,11 @@ plot(grt$price_sales, grt$price_earnings)
 plot(grt$price_cashflow, grt$price_earnings)
 ```
 
+Očito je da varijable imaju utjecaj na izlaznu varijablu.
+Kako bi ispitali pojedinačni utjecaj ovih varijabli, procijenit ćemo model jednostavne regresije.
+
 ```{r}
+grt = cat_funds[cat_funds$fund_return_10years > cat_funds$category_return_10years, ]
 fit.book = lm(price_earnings ~ price_book, data=grt)
 
 plot(grt$price_book, grt$price_earnings)
@@ -276,6 +299,26 @@ fit.cashflow = lm(price_earnings ~ price_cashflow, data=grt)
 plot(grt$price_cashflow, grt$price_earnings)
 lines(grt$price_cashflow,fit.cashflow$fitted.values,col='red')
 ```
+Nagibi pravaca linearne regresije potvrđuju tvrdnje o efektima pojedinih razmatranih varijabli na izlaznu varijablu.
+
+Prikažimo normalnost reziduala.
+
+```{r}
+qqnorm(rstandard(fit.book))
+qqline(rstandard(fit.book))
+ks.test(rstandard(fit.book),'pnorm')
+
+qqnorm(rstandard(fit.sales))
+qqline(rstandard(fit.sales))
+ks.test(rstandard(fit.sales),'pnorm')
+
+qqnorm(rstandard(fit.cashflow))
+qqline(rstandard(fit.cashflow))
+ks.test(rstandard(fit.cashflow),'pnorm')
+```
+Vidimo velika odstupanja od normalnosti za reziduale, pa se ne mogu donositi daljnja statistička zaključivanja, na osnovu linearne regresije.
+
+## Ovo nije dobro
 
 ```{r}
 summary(fit.book)
