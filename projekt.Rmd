@@ -23,7 +23,7 @@ Value fondovi investiraju u dionice čija je tržišna vrijednost ispod stvarne,
 Blend investiranje je investiranje u različite dionice iz istog razreda, npr. S&P500. Možemo ih smatrati kombinaciom value i growth investiranja.
 ```{r fig.height=5, fig.width=5, echo=FALSE}
 godine <- c(2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010)
-barplot(summary(na.omit(mutual_funds$investment)))
+barplot(summary(mutual_funds$investment), xlab = "Strategija investiranja", ylab = "Broj fondova")
 
 print('Growth')
 summary(mutual_funds[mutual_funds$investment == "Growth",]$ytd_return)
@@ -121,7 +121,7 @@ blend_return <- c(mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]
                   mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2010)))
 
 plot(godine,value_return,
-     main = "Povrat fondova sa strategijima u zadnjih 10 godina",
+     main = "Povrat fondova po strategijima u zadnjih 10 godina",
      type = "l",
      frame = FALSE,
      col="red")
@@ -146,6 +146,8 @@ Kako bih saznali koji stil investiranja daje najbolje rezultate testirati čemo 
 3-godišnjeg, 5-godišnjeg i 10-godišnjeg povrata.
 
 ## Testiranje jednakosti povrata fondova s obzirom na strategiju investiranja
+
+Prikazivat ćemo grafove i testove samo za 10-godišnje povrate jer nam oni daju najbolji dojam o podacima i kako bih smanjili broj prikaza.
 
 ```{r echo=FALSE, include=FALSE}
 growth_1years <- c(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_1year))
@@ -212,9 +214,9 @@ kruskal.test(fund_return_5years ~ investment, data=mutual_funds[mutual_funds$inv
 kruskal.test(fund_return_10years ~ investment, data=mutual_funds[mutual_funds$investment != "<undefined>",])
 
 ```
-Zaključujemo da postoji razlika u povratu fondova s obzirom na stil investiranja koji koriste.
+Zaključujemo da postoji razlika u povratu fondova s obzirom na stil investiranja koji koriste, međutim ne znamo koji se točno stilovi međusobno razlikuju.
 
-Sada čemo testirati koji stil investiranja ima največi povrat.
+Sada čemo testirati koji stilovi investiranja se zapravo razlikuju i koji ima največi povrat.
 
 ```{r include=FALSE, include=FALSE}
 hist(growth_1years,
@@ -356,14 +358,16 @@ wilcox.test(growth_10years, value_10years, alternative = "greater")
 wilcox.test(blend_10years, value_10years, alternative = "greater")
 ```
 
-Na temelju testova možemo zaključiti sljedeće:
-Growth investiranje ima najveći povrat za sve testirane podatke, a sljedeći najbolji stil investiranja je blend.
+Na temelju p-vrijednosti testova možemo zaključiti sljedeće:
 Growth investiranje daje najbolje povrate za 1, 3, 5 i 10-godišnje podatke, sljedeći je Bland način investiranja i naposljetku Value.
 
 
 ## Povrat fondova ovisno o stilu investiranja kada uzmemo rizik u obzir
 Utvrdili smo koji stil investiranja je najbolji ako uzmemo u obzir samo povrat fondova, međutim tada zanemarujemo rizik koji određeni stil investiranja donosi sa sebom.
-Sada čemo testirati povrat fonda ako uzmemo u obzir i rizik. Varijabla koju ćemo koristiti je sharp ratio jer ona dosta dobro prikazuje povrat fonda nasprem rizika. Sharp ratio je omjer povrata fonda i standardne devijacije
+Sada čemo testirati povrat fonda ako uzmemo u obzir i rizik. Varijabla koju ćemo koristiti je sharp ratio jer ona dosta dobro prikazuje povrat fonda nasprem rizika. Sharp ratio je omjer povrata fonda i standardne devijacije.
+
+Podaci na kojima ćemo provoditi testove su sharp ratio za 3, 5 i 10 godina.
+Ovdje ćemo također prikazivati grafičke prikaze samo za 10-godišnje podatke.
 
 
 ```{r echo=FALSE, include=FALSE}
@@ -407,7 +411,6 @@ boxplot(growth_10years_sharp, value_10years_sharp, blend_10years_sharp,
         main='10-o godišnji sharp ratio')
 ```
 
-Podaci na kojima ćemo provoditi testove su sharp ratio za 3, 5 i 10 godina.
 
 Prvo testiramo jednakos sharp ratio-a fondova Kruskal-Wallis-ovim testom, ovaj test koristimo jer je narušena pretpostavka normalnosti.
 
@@ -416,9 +419,9 @@ kruskal.test(fund_sharpe_ratio_3years ~ investment, data=mutual_funds[mutual_fun
 kruskal.test(fund_sharpe_ratio_5years ~ investment, data=mutual_funds[mutual_funds$investment != "<undefined>",])
 kruskal.test(fund_sharpe_ratio_10years ~ investment, data=mutual_funds[mutual_funds$investment != "<undefined>",])
 ```
-Zaključujemo da postoji razlika u sharp ratio-u fondova s obzirom na stil investiranja koji koriste.
+Zaključujemo da postoji razlika u sharp ratio-u fondova s obzirom na stil investiranja koji koriste, međutim ne znamo koje točno srednje vrijednosti se međusobno razlikuju.
 
-Sada čemo testirati koji stil investiranja ima najbolji sharp ratio.
+Sada čemo testirati koji stil investiranja ima najbolji sharp ratio, te kako se oni međusobno razlikuju.
 
 
 ```{r echo=FALSE, include=FALSE}
