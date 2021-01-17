@@ -5,6 +5,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
 ```
 
 ## Uvod
@@ -21,7 +22,7 @@ Growth, value i blend su tri stila investiranja koje ćemo usporediti u ovom pro
 Growth fondovi ulažu u dionice firmi za koje se predpostavlja veliki rast.
 Value fondovi investiraju u dionice čija je tržišna vrijednost ispod stvarne, odnosno u podcjenjene firme.
 Blend investiranje je investiranje u različite dionice iz istog razreda, npr. S&P500. Možemo ih smatrati kombinaciom value i growth investiranja.
-```{r fig.height=3.5, fig.width=5, echo=FALSE}
+```{r fig.height=5, fig.width=5, echo=FALSE}
 godine <- c(2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010)
 barplot(summary(mutual_funds$investment))
 
@@ -181,7 +182,7 @@ summary(blend_10years)
 
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, include=FALSE}
 
 boxplot(growth_1years, value_1years, blend_1years,
         names = c('Growth 1 god','Value 1 god', 'Blend 1 god'),
@@ -194,7 +195,8 @@ boxplot(growth_3years, value_3years, blend_3years,
 boxplot(growth_5years, value_5years, blend_5years,
         names = c('Growth 5 god','Value 5 god', 'Blend 5 god'),
         main='5-o godišnji povrati')
-
+```
+```{r echo=FALSE}
 boxplot(growth_10years, value_10years, blend_10years,
         names = c('Growth 10 god','Value 10 god', 'Blend 10 god'),
         main='10-o godišnji povrati')
@@ -335,7 +337,7 @@ lillie.test(value_10years)
 Kooristimo neparametarski Mann-Whitney-Wilcoxov test jer su pretpostavke normalnosti narušene.
 
 
-```{r fig.height=3.5, fig.width=5, echo=FALSE}
+```{r fig.height=3.5, fig.width=5, echo=FALSE, include=FALSE}
 wilcox.test(growth_1years, blend_1years, alternative = "greater")
 wilcox.test(growth_1years, value_1years, alternative = "greater")
 wilcox.test(blend_1years, value_1years, alternative = "greater")
@@ -348,7 +350,9 @@ wilcox.test(blend_3years, value_3years, alternative = "greater")
 wilcox.test(growth_5years, blend_5years, alternative = "greater")
 wilcox.test(growth_5years, value_5years, alternative = "greater")
 wilcox.test(blend_5years, value_5years, alternative = "greater")
+```
 
+```{r fig.height=3.5, fig.width=5, echo=FALSE}
 wilcox.test(growth_10years, blend_10years, alternative = "greater")
 wilcox.test(growth_10years, value_10years, alternative = "greater")
 wilcox.test(blend_10years, value_10years, alternative = "greater")
@@ -388,7 +392,7 @@ summary(growth_10years_sharp)
 summary(value_10years_sharp)
 summary(blend_10years_sharp)
 ```
-```{r echo=FALSE}
+```{r echo=FALSE, include=FALSE}
 boxplot(growth_3years_sharp, value_3years_sharp, blend_3years_sharp,
         names = c('Growth 3 god','Value 3 god', 'Blend 3 god'),
         main='3-o godišnji sharp ratio')
@@ -396,7 +400,9 @@ boxplot(growth_3years_sharp, value_3years_sharp, blend_3years_sharp,
 boxplot(growth_5years_sharp, value_5years_sharp, blend_5years_sharp,
         names = c('Growth 5 god','Value 5 god', 'Blend 5 god'),
         main='5-o godišnji sharp ratio')
+```
 
+```{r echo=FALSE}
 boxplot(growth_10years_sharp, value_10years_sharp, blend_10years_sharp,
         names = c('Growth 10 god','Value 10 god', 'Blend 10 god'),
         main='10-o godišnji sharp ratio')
@@ -409,7 +415,6 @@ Prvo testiramo jednakos sharp ratio-a fondova Kruskal-Wallis-ovim testom.
 kruskal.test(fund_sharpe_ratio_3years ~ investment, data=mutual_funds[mutual_funds$investment != "<undefined>",])
 kruskal.test(fund_sharpe_ratio_5years ~ investment, data=mutual_funds[mutual_funds$investment != "<undefined>",])
 kruskal.test(fund_sharpe_ratio_10years ~ investment, data=mutual_funds[mutual_funds$investment != "<undefined>",])
-
 ```
 Zaključujemo da postoji razlika u sharp ratio-u fondova s obzirom na stil investiranja koji koriste.
 
@@ -508,8 +513,7 @@ Koristimo Mann-Whitney-Wilcoxov test jer su pretpostavke normalnosti narušene.
 
 
 
-Testovi
-```{r fig.height=3.5, fig.width=5, echo=FALSE}
+```{r fig.height=3.5, fig.width=5, echo=FALSE, include=FALSE}
 print('Growth Blend 3')
 wilcox.test(growth_3years_sharp, blend_3years_sharp, alternative = "greater")
 print('Growth Value 3')
@@ -523,7 +527,9 @@ print('Growth Value 5')
 wilcox.test(growth_5years_sharp, value_5years_sharp, alternative = "greater")
 print('Blend Value 5')
 wilcox.test(blend_5years_sharp, value_5years_sharp, alternative = "greater")
+```
 
+```{r fig.height=3.5, fig.width=5, echo=FALSE}
 print('Growth Blend 10')
 wilcox.test(growth_10years_sharp, blend_10years_sharp, alternative = "greater")
 print('Growth Value 10')
@@ -562,7 +568,7 @@ mutual_funds_copy['size'] <- sapply(mutual_funds_copy['size'], as.character)
 
 
 Napravimo kontigencijsku tablicu i dodamo sume redaka i stupaca 
-```{r fig.height=3.5, fig.width=5, echo=FALSE}
+```{r fig.height=3.5, fig.width=5, echo=FALSE, include=FALSE}
 
 tbl = table(mutual_funds_copy[mutual_funds_copy$investment == 'Blend' 
                       | mutual_funds_copy$investment == 'Growth' 
@@ -571,8 +577,9 @@ tbl = table(mutual_funds_copy[mutual_funds_copy$investment == 'Blend'
                       | mutual_funds_copy$investment == 'Growth' 
                       | mutual_funds_copy$investment == 'Value',]$size)
 tbl
+```
 
-
+```{r fig.height=3.5, fig.width=5, echo=FALSE}
 added_margins_tbl = addmargins(tbl)
 print(added_margins_tbl)
 ```
@@ -598,37 +605,35 @@ chisq.test(tbl,correct=F)
 ```
 Na temelju male p-vrijednoti odbacijemo hipotezu H0 i zaključujemo da je veličina firmi u koju fond ulaže zavosno o stilu investiranja koje fond koristi
 
-## 4 Analiza kategorija
 
-U nastavku ćemo promatrati kategorije fondova.
+## U nastavku ćemo promatrati kategorije fondova.
 
-### 4.1 Učitavanje i pregled podata
-
-Učitajmo podatke i prikažimo dataset.
-```{r}
+```{r echo=FALSE, include=FALSE}
 head(mutual_funds)
 ```
 
-Pogledajmo sve kategorije:
-```{r}
+```{r echo=FALSE, include=FALSE}
 levels(mutual_funds$category)
 ```
 Pogledajmo frekvenciju za svaku kategoriju.
 
-```{r}
+```{r echo=FALSE, include=FALSE}
 #library(dplyr)
 
 cats = table(mutual_funds$category)
 cats = as.data.frame(cats)
 cats
 
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 library(ggplot2)
 
 ggplot(mutual_funds, aes(category)) + geom_bar(fill = "#0073C2FF") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 Pogledajmo prosječnu vrijednost povrata fondova naspram kategorije kojoj oni pripadaju za povrat od 10 godina.
-```{r}
+```{r echo=FALSE}
 cat_ytd = do.call(data.frame, aggregate(cbind(fund_return_10years, category_return_10years)~category, mutual_funds, FUN = function(x) c(Mean = mean(x))))
 
 plot(cat_ytd$fund_return_10years,type = "o",col = "blue", xlab = "Kategorije", ylab = "Povrat", 
@@ -642,12 +647,11 @@ legend(x = "topleft", y=0.85, legend = c("Fondovi", "Kategorije"), col = c("blue
 
 Promotrimo kako se ponašaju podaci unutar nekih od kategorija. Kako bi imali što bolju reprezentaciju, promatrat ćemo kategorije s najviše fondova "Large Growth", "Large Value", "Mid-Cap Growth", "Small Blend" i "Small Growth". Pogledajmo njihove boxplotove i distribuciju:
 
-```{r}
+```{r echo=FALSE}
 
 cats = c("Large Growth", "Large Value", "Mid-Cap Growth", "Small Blend", "Small Growth")
 
 boxplot(mutual_funds[mutual_funds$category == "Large Growth",]$fund_return_10years, boxfill = NA, border = NA,  main='Povrat fondova 10 godina', names=c(""))
-
 i = 1
 for (c in cats) {
   jedna = mutual_funds[mutual_funds$category == c, ]
@@ -659,6 +663,9 @@ for (c in cats) {
   
   i = i + 1
 }
+```
+
+```{r echo=FALSE, include=FALSE}
 
 for (c in cats) {
   jedna = mutual_funds[mutual_funds$category == c, ]
@@ -671,9 +678,9 @@ for (c in cats) {
          ) 
 }
 ```
-Pogledajmo normalnost na istim kategorijama.
 
-```{r}
+
+```{r echo=FALSE, include=FALSE}
 for (c in cats) {
   jedna = mutual_funds[mutual_funds$category == c, ]
   
@@ -682,9 +689,9 @@ for (c in cats) {
 }
 ```
 
-Prije nego što nastavimo resimo se kategorija s malim frekvencijama.
 
-```{r}
+
+```{r echo=FALSE, include=FALSE}
 cats = table(mutual_funds$category)
 cats = as.data.frame(cats)
 to_remove = cats[cats$Freq < 30,]
@@ -700,9 +707,10 @@ for (c in to_remove$Var1) {
 
 Pogledajmo u kojim kategorijama fondovi najviše pobjeđuj.
 Odrat ćemo t-test za svaku kategoriju i prikazati procenat fondova koji su pobijedili svoju kategoriju.
+
 $H_0$ fondovi ne pobjeđuju kategorije.
 
-```{r}
+```{r echo=FALSE}
 testovi = data.frame()
 
 for (c in unique(cat_funds$category)) {
@@ -718,7 +726,9 @@ for (c in unique(cat_funds$category)) {
 testovi
 
 y10t = testovi[testovi$p10years < 0.05,]
+```
 
+```{r echo=FALSE, include=FALSE}
 p = nrow(y10t) / nrow(testovi) * 100
 cat("Procenat fondova koji pobjedjuju kategoriju", p)
 ```
@@ -728,7 +738,7 @@ Analizirali smo svaku kategoriju zasebni i dobili smo da u 12.5% fondovi pobjeđ
 
 Podijeliti ćemo fondove u dvije kategorije, one koji pobjeđuju svoju kategoriju i one koji to ne uspijevaju za povrate u 10 godina.
 
-```{r}
+```{r echo=FALSE, include=FALSE}
 manji = cat_funds[cat_funds$fund_return_10years < cat_funds$category_return_10years, ]
 veci = cat_funds[cat_funds$fund_return_10years > cat_funds$category_return_10years, ]
 dim(manji)
@@ -737,23 +747,29 @@ dim(veci)
 
 Prikažimo grafički kategorije što su nam preostale.
 
-```{r}
+```{r echo=FALSE, include=FALSE}
 cats = table(veci$category)
 cats = as.data.frame(cats)
 cats
+```
 
+```{r echo=FALSE}
 ggplot(veci, aes(category)) + geom_bar(fill = "#0073C2FF") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + ggtitle("Fondovi koji pobjeđuju kategoriju")
 
+```
+```{r echo=FALSE, include=FALSE}
 cats = table(manji$category)
 cats = as.data.frame(cats)
 cats
-
+```
+```{r echo=FALSE}
 ggplot(manji, aes(category)) + geom_bar(fill = "#0073C2FF") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + ggtitle("Fondovi koji ne pobjeđuju kategoriju")
 ```
 
-Izdvojimo samo one podatke koji su nam potrebni i prikažimo njihov summary.
 
-```{r}
+
+```{r echo=FALSE, include=FALSE}
+library(dplyr)
 veci = select(veci, c("category", "net_assets", "fund_yield", "morningstar_rating", "inception_date", "investment", "size", "currency", "portfolio_cash", "portfolio_stocks", "portfolio_preferred", "fund_return_10years", "category_return_10years"))
 manji = select(manji, c("category", "net_assets", "fund_yield", "morningstar_rating", "inception_date", "investment", "size", "currency", "portfolio_cash", "portfolio_stocks", "portfolio_preferred", "fund_return_10years", "category_return_10years"))
 
@@ -764,9 +780,8 @@ summary(veci)
 summary(manji)
 ```
 
-Prikažimo kako se povrati fonda u 10 godina - povrat kategorija u 10 ponašaju za naše dvije skupine podataka.
 
-```{r}
+```{r echo=FALSE, include=FALSE}
 h = hist(veci$relative_return,
          breaks=100,
          main="Povrati iz svih fondova koji pobjedjuju svoju kategoriju",
@@ -795,9 +810,44 @@ boxplot(veci$relative_return, manji$relative_return,
         main='Boxplot fondova zavisno da li pobjedjuju ili ne svoju kategoriju')
 ```
 
+Testirajmo da li odabrana strategija ima utjecaj da li će fond pobijediti svoju kategoriju.
+
+Pogledajmo kontingencijsku tablicu.
+
+```{r echo=FALSE}
+veci['investment'] <- sapply(veci['investment'], as.character);
+manji['investment'] <- sapply(manji['investment'], as.character);
+
+veci_invest = table(veci[veci$investment=="Blend" | veci$investment=="Growth" | veci$investment=="Value",]$investment)
+manj_invest = table(manji[manji$investment=="Blend" | manji$investment=="Growth" | manji$investment=="Value",]$investment)
+tbl = rbind(veci_invest, manj_invest)
+
+added_margins_tbl = addmargins(tbl)
+print(added_margins_tbl)
+```
+Da bi izvršili test, frekvencija za svaki razred nam mora biti veća ili jednaka 5.
+
+```{r echo=FALSE}
+for (col_names in colnames(added_margins_tbl)){
+  for (row_names in rownames(added_margins_tbl)){
+    if (!(row_names == 'Sum' | col_names == 'Sum') ){
+      cat('Očekivane frekvencije za razred ',col_names,'-',row_names,': ',(added_margins_tbl[row_names,'Sum'] * added_margins_tbl['Sum',col_names]) / added_margins_tbl['Sum','Sum'],'\n')
+    }
+  }
+}
+```
+Sve očekivane frekvencije su veće od 5, možemo nastaviti sa izvršavanjem testa.
+
+```{r echo=FALSE}
+chisq.test(tbl,correct=F)
+```
+Vidimo da nam odabrana strategija govori koji fond pobjeđuje kategoriju.
+
+
+
 Grafički pregled morningstar ratinga između fondova koji pobjeđuju i ne pobjeđuju svoju kategoriju.
 
-```{r}
+```{r echo=FALSE}
 v = veci[veci$morningstar_rating > 0, ]
 m = manji[manji$morningstar_rating > 0, ]
 h = hist(v$morningstar_rating,
@@ -821,118 +871,13 @@ Prema gore odrađenom grafu, možemo primijetiti postoji velika razlika između 
 
 $H_0$ Morningstar rating fondova koji pobjeđuju svoju kategoriju nije veći od onih koji ne pobjeđuju svoju kategoriju.
 
-```{r}
+```{r echo=FALSE}
 t.test(v$morningstar_rating, m$morningstar_rating, alt = "greater")
 ```
 Vidimo da naša inicijalna pretpostavka nije bila točna, tj. alternativna hipoteza je točna, fondovi s većim morningstar rating generalno pobjeđuju svoje kategorije više nego oni s manjim.
 
-Testirajmo da li odabrana strategija ima utjecaj da li će fond pobijediti svoju kategoriju.
-
-Pogledajmo kontingencijsku tablicu.
-
-```{r}
-veci['investment'] <- sapply(veci['investment'], as.character);
-manji['investment'] <- sapply(manji['investment'], as.character);
-
-veci_invest = table(veci[veci$investment=="Blend" | veci$investment=="Growth" | veci$investment=="Value",]$investment)
-manj_invest = table(manji[manji$investment=="Blend" | manji$investment=="Growth" | manji$investment=="Value",]$investment)
-tbl = rbind(veci_invest, manj_invest)
-
-added_margins_tbl = addmargins(tbl)
-print(added_margins_tbl)
-```
-Da bi iyvršili test, frekvencija za svaki razred nam mora biti veća ili jednaka 5.
-
-```{r}
-for (col_names in colnames(added_margins_tbl)){
-  for (row_names in rownames(added_margins_tbl)){
-    if (!(row_names == 'Sum' | col_names == 'Sum') ){
-      cat('Očekivane frekvencije za razred ',col_names,'-',row_names,': ',(added_margins_tbl[row_names,'Sum'] * added_margins_tbl['Sum',col_names]) / added_margins_tbl['Sum','Sum'],'\n')
-    }
-  }
-}
-```
-Sve očekivane frekvencije su veće od 5, možemo nastaviti sa izvršavanjem testa.
-
-```{r}
-chisq.test(tbl,correct=F)
-```
-Vidimo da nam odabrana strategija govori koji fond pobjeđuje kategoriju.
 
 
-## Pregled fondova koji pobjedjuju svoju kategoriju
-
-Prikažimo scatterplot kako bi smo promotrili utjecaj samo jedne nezavisne varijable X na neku zavisnu varijablu Y.
-Promatrajmo utjecaj varijabli price_book, price_sales i price_cashflow na varijablu price_earnings.
-
-```{r}
-grt = cat_funds[cat_funds$fund_return_10years > cat_funds$category_return_10years, ]
-
-plot(grt$price_book, grt$price_earnings)
-plot(grt$price_sales, grt$price_earnings)
-plot(grt$price_cashflow, grt$price_earnings)
-```
-
-Očito je da varijable imaju utjecaj na izlaznu varijablu.
-Kako bi ispitali pojedinačni utjecaj ovih varijabli, procijenit ćemo model jednostavne regresije.
-
-```{r}
-grt = cat_funds[cat_funds$fund_return_10years > cat_funds$category_return_10years, ]
-fit.book = lm(price_earnings ~ price_book, data=grt)
-
-plot(grt$price_book, grt$price_earnings)
-lines(grt$price_book,fit.book$fitted.values,col='red')
-
-fit.sales = lm(price_earnings ~ price_sales, data=grt)
-
-plot(grt$price_sales, grt$price_earnings)
-lines(grt$price_sales,fit.sales$fitted.values,col='red')
-
-fit.cashflow = lm(price_earnings ~ price_cashflow, data=grt)
-
-plot(grt$price_cashflow, grt$price_earnings)
-lines(grt$price_cashflow,fit.cashflow$fitted.values,col='red')
-```
-Nagibi pravaca linearne regresije potvrđuju tvrdnje o efektima pojedinih razmatranih varijabli na izlaznu varijablu.
-
-Prikažimo normalnost reziduala.
-
-```{r}
-qqnorm(rstandard(fit.book))
-qqline(rstandard(fit.book))
-ks.test(rstandard(fit.book),'pnorm')
-
-qqnorm(rstandard(fit.sales))
-qqline(rstandard(fit.sales))
-ks.test(rstandard(fit.sales),'pnorm')
-
-qqnorm(rstandard(fit.cashflow))
-qqline(rstandard(fit.cashflow))
-ks.test(rstandard(fit.cashflow),'pnorm')
-```
-Vidimo velika odstupanja od normalnosti za reziduale, pa se ne mogu donositi daljnja statistička zaključivanja, na osnovu linearne regresije.
-
-## Ovo nije dobro
-
-```{r}
-summary(fit.book)
-
-summary(fit.sales)
-
-summary(fit.cashflow)
-```
-
-```{r}
-cor(grt$price_sales, grt$price_earnings)
-
-cor.test(grt$price_sales, grt$price_earnings)
-
-summary(fit.sales)
-```
-```{r}
-fit.mul = lm(price_earnings ~ price_sales + price_book + price_cashflow, data=grt)
-summary(fit.mul)
-```
 
 ## Opis podataka
 
