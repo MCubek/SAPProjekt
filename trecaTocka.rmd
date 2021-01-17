@@ -82,7 +82,7 @@ median <- median(mutual_funds_bySize$net_assets)
 mutual_funds_large <- mutual_funds_bySize[mutual_funds_bySize$net_assets > median,]
 mutual_funds_small <- mutual_funds_bySize[mutual_funds_bySize$net_assets <= median,]
 summary(mutual_funds_large)
-cat("\n")
+
 summary(mutual_funds_small)
 ```
 
@@ -133,6 +133,9 @@ lillie.test(mutual_funds_bySize$success)
 ```
 Test nam ukazuje da odbacujemo H0 -> pretpostavku da je normalno distribuirano.
 
+
+Izbaciti
+--------------------------------------------------------------
 Varijance velikih i malih fondova
 ```{r}
 var(mutual_funds_large$success)
@@ -152,6 +155,12 @@ t.test(mutual_funds_large$success, mutual_funds_small$success, alt = "greater", 
 ```
 Test nam govori da su veći fondovi prosječno uspješniji.
 
+--------------------------------------------------------------
+
+```{r}
+wilcox.test(mutual_funds_large$success, mutual_funds_small$success, alternative = "greater")
+```
+Test nam govori da su veći fondovi prosječno uspješniji.
 
 Usporedba po morningstar ratingu.
 
@@ -248,9 +257,12 @@ require(nortest)
 lillie.test(rstandard(fit.size))
 
 ```
+Reziduali nisu normalno distribuirani i model nam nije uspio.
+
+Not applicable
+--------------------------------------------------------------
 
 Analiza modela
-
 ```{r analiza procijenjenih modela}
 
 summary(fit.size)
