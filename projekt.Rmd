@@ -609,7 +609,10 @@ chisq.test(tbl,correct=F)
 Na temelju male p-vrijednoti zaključujemo da je veličina firmi u koju fond ulaže zavisna o stilu investiranja koje fond koristi
 
 
-## U nastavku ćemo promatrati kategorije fondova.
+## Kategorije fondova
+
+U nastavku ćemo promatrati kategorije fondova. Pogledat ćemo da li fondovi uspijevaju pobijediti kategoriju u smislu povrata.
+Nakon toga ćemo podijeliti dataset u dva dijela, za prvi dio ćemo uzeti fondove koji uspijevaju pobijediti svoju kategoriju, a za drugi dio one što ne uspijevaju da pobijede.
 
 ```{r echo=FALSE, include=FALSE}
 head(mutual_funds)
@@ -618,7 +621,7 @@ head(mutual_funds)
 ```{r echo=FALSE, include=FALSE}
 levels(mutual_funds$category)
 ```
-Pogledajmo frekvenciju za svaku kategoriju.
+Pogledajmo grafički prikaz broja fondova u svakoj kategoriji.
 
 ```{r echo=FALSE, include=FALSE}
 #library(dplyr)
@@ -709,9 +712,10 @@ for (c in to_remove$Var1) {
 ```
 
 Pogledajmo u kojim kategorijama fondovi najviše pobjeđuj.
-Odrat ćemo t-test za svaku kategoriju i prikazati procenat fondova koji su pobijedili svoju kategoriju.
+Odrat ćemo t-test za svaku kategoriju i prikazati procenat fondova koji su prošli test.
+Gledamo da li je stvarni mean povrata fondova u 10 godina drugačiji od povrata kategorije u 10 godina.
 
-$H_0$ fondovi ne pobjeđuju kategorije.
+$H_0$ fondovi ne pobjeđuju kategorije, tj mean(fund_return_10years) < category_return_10years.
 
 ```{r echo=FALSE}
 testovi = data.frame()
@@ -735,7 +739,7 @@ y10t = testovi[testovi$p10years < 0.05,]
 p = nrow(y10t) / nrow(testovi) * 100
 cat("Procenat fondova koji pobjedjuju kategoriju", p)
 ```
-Analizirali smo svaku kategoriju zasebni i dobili smo da u 12.5% fondovi pobjeđuju svoju kategoriju.
+Analizirali smo svaku kategoriju zasebno i dobili smo da u 12.5% slučajeva fondovi pobjeđuju svoju kategoriju.
 
 ## Usporedba fondova koji pobjeđuju kategoriju naspram onih koji to ne uspijevaju
 
@@ -748,7 +752,7 @@ dim(manji)
 dim(veci)
 ```
 
-Prikažimo grafički kategorije što su nam preostale.
+Prikažimo grafički broj fondova za fondove koji uspijevaju pobijediti svoju kategoriju, i one koji ne uspijevaju.
 
 ```{r echo=FALSE, include=FALSE}
 cats = table(veci$category)
@@ -849,6 +853,7 @@ Vidimo da nam odabrana strategija govori koji fond pobjeđuje kategoriju.
 
 
 Grafički pregled morningstar ratinga između fondova koji pobjeđuju i ne pobjeđuju svoju kategoriju.
+Morningstar je rating nekog fonda zasnovan na velikom broju faktora, njegova vrijesnost ide od 5 (najveće) do 1 (najmanje) vrijednosti. Morningstar je veoma važna metrika uspiješnosti fonda.
 
 ```{r echo=FALSE}
 v = veci[veci$morningstar_rating > 0, ]
@@ -871,6 +876,7 @@ h = hist(m$morningstar_rating,
 ```
 
 Prema gore odrađenom grafu, možemo primijetiti postoji velika razlika između morningstar ratinga.
+Ovdje radimo t-test, gledamo da li je mean vrijednost mroningstar ratinga kod fonova koji pobjeđuju svoju kategoriju veća od onih koji ne uspijevaju da pobijede.
 
 $H_0$ Morningstar rating fondova koji pobjeđuju svoju kategoriju nije veći od onih koji ne pobjeđuju svoju kategoriju.
 
