@@ -1,0 +1,1443 @@
+---
+title: "WhatSap"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## Opis problema
+
+U kontekstu dioničarskih fondova, biranje dionica kojim će fond "pobijediti tržište" složen je posao, po nekim mišljenjima čak i nemoguć. Iz tog razloga, mnoge su analize rađene na tu temu, te je pravilno upravljanje fondovima danas još uvijek aktualno pitanje. Ovo istraživanje jedna je od takvih analiza. Korištenjem statističkih metoda, cilj ovog projekta bio je pokušati dati odgovore na probleme koji uključuju teme poput konzistentne pobijede fondova u svojoj kategoriji te odnosi pojedinih karakteristika fonda s njegovim dugoročnim uspjehom. Naši rezultati i zaključci, kao i korištena metodologija, nalazi se u nastavku ovog rada.
+
+## Opis podataka
+
+Prilikom izrade projekta, koristili smo se podatcima o dioničkim fondovima dobivenim iz sljedećeg skupa podataka. 
+```{r fig.height=3.5, fig.width=5, echo=FALSE}
+mutual_funds <- read.csv("mutual_funds.csv")
+```
+Osim metapodataka o fondovima, kao što su ime, izdavač i kategorija, svaki fond sadrži širok spektar atributa. U projektu nisu korišteni svi podatci, već se istraživanje fokusira na par ključnih podataka i njihovom povezanošću. Jedan od ključnih podataka vezan za istraživanje je povrat fonda. Budući da je uz skup podataka vezan cijeli niz atributa vezanih uz povrat, mi smo kao mjeru povrata koristili atribut "fund_return_10years", tj. povrat fonda u zadnjih 10 godina bez uzimanja u obzir rizik fonda. Stoga to treba uzeti u obzir prilikom daljnje analize rada.
+
+
+## Strategije investiranja
+Growth, value i blend su tri stila investiranja koje ćemo usporediti u ovom projektu.
+Growth fondovi ulažu u dionice firmi za koje se pretpostavlja veliki rast.
+Value fondovi investiraju u dionice čija je tržišna vrijednost ispod stvarne, odnosno u podcijenjene firme.
+Blend investiranje je investiranje u različite dionice iz istog razreda, npr. S&P500. Možemo ih smatrati kombinacijom value i growth investiranja.
+```{r  echo=FALSE}
+godine <- c(2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010)
+#barplot(summary(na.omit(mutual_funds$investment)))
+print('Growth')
+summary(mutual_funds[mutual_funds$investment == "Growth",]$ytd_return)
+print("Value")
+summary(mutual_funds[mutual_funds$investment == "Value",]$ytd_return)
+print("Blend")
+summary(mutual_funds[mutual_funds$investment == "Blend",]$ytd_return)
+
+
+growth_investment <- c(sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$ytd_return)), 
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2018)), 
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2017)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2016)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2015)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2014)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2013)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2012)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2011)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2010)))
+
+value_investment <- c(sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$ytd_return)), 
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2018)), 
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2017)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2016)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2015)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2014)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2013)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2012)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2011)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2010)))
+
+blend_investment <- c(sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$ytd_return)), 
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2018)), 
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2017)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2016)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2015)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2014)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2013)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2012)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2011)),
+       sum(!is.na(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2010)))
+
+plot(godine,c(value_investment),
+     main = "Broj fondova po strategijima u zadnjih 10 godina",
+     type = "l",
+     frame = FALSE,
+     ylim = c(1000, 3000),
+     col="red")
+lines(godine,growth_investment,
+      pch = 18,
+      type = "l",
+       col="blue")
+lines(godine,blend_investment,
+      pch = 18,
+      type = "l",
+      lty = 2,
+       col="green")
+
+legend("topleft", legend=c("Value", "Growth","Blend"),
+       col = c("red", "blue", "green"), lty = 1:1, box.lty=0)
+```
+
+```{r echo=FALSE}
+value_return <- c(mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$ytd_return)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2018)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2017)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2016)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2015)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2014)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2013)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2012)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2011)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_2010)))
+
+growth_return <- c(mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$ytd_return)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2018)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2017)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2016)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2015)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2014)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2013)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2012)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2011)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_2010)))
+
+blend_return <- c(mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$ytd_return)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2018)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2017)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2016)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2015)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2014)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2013)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2012)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2011)),
+                  mean(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_2010)))
+
+plot(godine,value_return,
+     main = "Povrati fondova po strategijima u zadnjih 10 godina",
+     type = "l",
+     frame = FALSE,
+     col="red")
+lines(godine,growth_return,
+      pch = 18,
+      type = "l",
+       col="blue")
+lines(godine,blend_return,
+      pch = 18,
+      type = "l",
+      lty = 2,
+       col="green")
+
+legend("topleft", legend=c("Value", "Growth","Blend"),
+       col = c("red", "blue", "green"), lty = 1:2, box.lty=0)
+
+```
+Kao što vidimo, Growth je najučestalija strategija investiranja fondova iz ovog data-seta te možemo vidjeti iz grafa da je za posljednje 3 godine Growth imao najveću vrijednost srednjeg godišnjeg povrata.
+
+Kako bih saznali koji stil investiranja daje najbolje rezultate testirati ćemo njihove povrate na temelju podataka 1-godišnjeg,
+3-godišnjeg, 5-godišnjeg i 10-godišnjeg povrata.
+
+## Testiranje jednakosti povrata fondova s obzirom na strategiju investiranja
+
+Prikazivat ćemo grafove i testove samo za 10-godišnje povrate jer nam oni daju najbolji dojam o podacima i kako bih smanjili broj prikaza.
+
+```{r echo=FALSE, include=FALSE}
+growth_1years <- c(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_1year))
+value_1years <- c(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_1year))
+blend_1years <- c(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_1year))
+
+growth_3years <- c(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_3years))
+value_3years <- c(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_3years))
+blend_3years <- c(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_3years))
+
+growth_5years <- c(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_5years))
+value_5years <- c(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_5years))
+blend_5years <- c(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_5years))
+
+growth_10years <- c(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_10years))
+value_10years <- c(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_return_10years))
+blend_10years <- c(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_return_10years))
+
+cat("Podatci o povratu fondova sa strategijom Growth u zadnjih godinu dana\n")
+summary(growth_1years)
+cat("\n")
+cat("Podatci o povratu fondova sa strategijom Value u zadnjih godinu dana\n")
+summary(value_1years)
+cat("\n")
+cat("Podatci o povratu fondova sa strategijom Blend u zadnjih godinu dana\n")
+summary(blend_1years)
+cat("\n")
+
+cat("Podatci o povratu fondova sa strategijom Growth u zadnje 3 godine\n")
+summary(growth_3years)
+cat("\n")
+cat("Podatci o povratu fondova sa strategijom Value u zadnje 3 godine\n")
+summary(value_3years)
+cat("\n")
+cat("Podatci o povratu fondova sa strategijom Blend u zadnje 3 godine\n")
+summary(blend_3years)
+cat("\n")
+
+cat("Podatci o povratu fondova sa strategijom Growth u zadnjih 5 godina\n")
+summary(growth_5years)
+cat("\n")
+cat("Podatci o povratu fondova sa strategijom Value u zadnjih 5 godina\n")
+summary(value_5years)
+cat("\n")
+cat("Podatci o povratu fondova sa strategijom Blend u zadnjih 5 godina\n")
+summary(blend_5years)
+cat("\n")
+
+cat("Podatci o povratu fondova sa strategijom Growth u zadnjih 10 godina\n")
+summary(growth_10years)
+cat("\n")
+cat("Podatci o povratu fondova sa strategijom Value u zadnjih 10 godina\n")
+summary(value_10years)
+cat("\n")
+cat("Podatci o povratu fondova sa strategijom Blend u zadnjih 10 godina\n")
+summary(blend_10years)
+
+
+```
+
+```{r echo=FALSE, include=FALSE}
+
+boxplot(growth_1years, value_1years, blend_1years,
+        names = c('Growth 1 god','Value 1 god', 'Blend 1 god'),
+        main='1-ogodišnji povrati')
+
+boxplot(growth_3years, value_3years, blend_3years,
+        names = c('Growth 3 god','Value 3 god', 'Blend 3 god'),
+        main='3-ogodišnji povrati')
+
+boxplot(growth_5years, value_5years, blend_5years,
+        names = c('Growth 5 god','Value 5 god', 'Blend 5 god'),
+        main='5-ogodišnji povrati')
+```
+
+
+```{r echo=FALSE}
+boxplot(growth_10years, value_10years, blend_10years,
+        names = c('Growth 10 god','Value 10 god', 'Blend 10 god'),
+        main='10-o godišnji povrati')
+```
+
+
+Prvo testiramo jednakost povrata strategija investiranja Kruskal-Wallisovim testom. Ovaj neparametarski test koristimo umjesto ANOVA-e jer podaci nisu zadovoljili pretpostavku normalnosti.
+```{r echo=FALSE}
+kruskal.test(fund_return_1year ~ investment, data=mutual_funds[mutual_funds$investment != "<undefined>",])
+kruskal.test(fund_return_3years ~ investment, data=mutual_funds[mutual_funds$investment != "<undefined>",])
+kruskal.test(fund_return_5years ~ investment, data=mutual_funds[mutual_funds$investment != "<undefined>",])
+kruskal.test(fund_return_10years ~ investment, data=mutual_funds[mutual_funds$investment != "<undefined>",])
+
+```
+Zaključujemo da postoji razlika u povratu fondova s obzirom na stil investiranja koji koriste, međutim ne znamo koji se točno stilovi međusobno razlikuju.
+
+Sada ćemo testirati koji stilovi investiranja se zapravo razlikuju i koji ima najveći povrat.
+
+```{r include=FALSE }
+hist(growth_1years,
+     breaks = 20,
+    main = 'Histogram jednogodišnjih povrata Growth fondova',
+    xlab = 'Povrat u %',
+    col='red')
+hist(blend_1years,
+     breaks = 20,
+     main = 'Histogram jednogodišnjih povrata Blend fondova',
+     xlab = 'Povrat u %',
+     col='red')
+hist(value_1years,
+     breaks = 20,
+     main = 'Histogram jednogodišnjih povrata Value fondova',
+     xlab = 'Povrat u %',
+     col='red')
+
+
+hist(growth_3years,
+     breaks = 20,
+    main = 'Histogram trogodišnjih povrata Growth fondova',
+    xlab = 'Povrat u %',
+    col='red')
+hist(blend_3years,
+     breaks = 20,
+     main = 'Histogram trogodišnjih povrata Blend fondova',
+     xlab = 'Povrat u %',
+     col='red')
+hist(value_3years,
+     breaks = 20,
+     main = 'Histogram trogodišnjih povrata Value fondova',
+     xlab = 'Povrat u %',
+     col='red')
+
+
+hist(growth_5years,
+     breaks = 20,
+    main = 'Histogram povrata Growth 5',
+    xlab = 'Povrat u %',
+    col='red')
+hist(blend_5years,
+     breaks = 20,
+     main = 'Histogram povrata Blend 5',
+     xlab = 'Povrat u %',
+     col='red')
+hist(value_5years,
+     breaks = 20,
+     main = 'Histogram povrata Value 5',
+     xlab = 'Povrat u %',
+     col='red')
+
+
+
+hist(growth_10years,
+     breaks = 20,
+    main = 'Histogram povrata Growth 10',
+    xlab = 'Povrat u %',
+    col='red')
+hist(blend_10years,
+     breaks = 20,
+     main = 'Histogram povrata Blend 10',
+     xlab = 'Povrat u %',
+     col='red')
+
+hist(value_10years,
+     breaks = 20,
+     main = 'Histogram povrata Value 10',
+     xlab = 'Povrat u %',
+     col='red')
+```
+
+```{r echo=FALSE, include=FALSE}
+qqnorm(growth_1years,pch=1,frame=FALSE,main='Growth 1')
+qqline(growth_1years,col='steelblue',lwd=2)
+qqnorm(blend_1years,pch=1,frame=FALSE,main='Blend 1')
+qqline(blend_1years,col='steelblue',lwd=2)
+qqnorm(value_1years,pch=1,frame=FALSE,main='Value 1')
+qqline(value_1years,col='steelblue',lwd=2)
+require(nortest)
+lillie.test(growth_1years)
+lillie.test(blend_1years)
+lillie.test(value_1years)
+
+
+qqnorm(growth_3years,pch=1,frame=FALSE,main='Growth 3')
+qqline(growth_3years,col='steelblue',lwd=2)
+qqnorm(blend_3years,pch=1,frame=FALSE,main='Blend 3')
+qqline(blend_3years,col='steelblue',lwd=2)
+qqnorm(value_3years,pch=1,frame=FALSE,main='Value 3')
+qqline(value_3years,col='steelblue',lwd=2)
+lillie.test(growth_3years)
+lillie.test(blend_3years)
+lillie.test(value_3years)
+
+
+qqnorm(growth_5years,pch=1,frame=FALSE,main='Growth 5')
+qqline(growth_5years,col='steelblue',lwd=2)
+qqnorm(blend_5years,pch=1,frame=FALSE,main='Blend 5')
+qqline(blend_5years,col='steelblue',lwd=2)
+qqnorm(value_5years,pch=1,frame=FALSE,main='Value 5')
+qqline(value_5years,col='steelblue',lwd=2)
+lillie.test(growth_5years)
+lillie.test(blend_5years)
+lillie.test(value_5years)
+
+qqnorm(growth_10years,pch=1,frame=FALSE,main='Growth 10')
+qqline(growth_10years,col='steelblue',lwd=2)
+qqnorm(blend_10years,pch=1,frame=FALSE,main='Blend 10')
+qqline(blend_10years,col='steelblue',lwd=2)
+qqnorm(value_10years,pch=1,frame=FALSE,main='Value 10')
+qqline(value_10years,col='steelblue',lwd=2)
+lillie.test(growth_10years)
+lillie.test(blend_10years)
+lillie.test(value_10years)
+```
+
+Koristimo neparametarski Mann-Whitney-Wilcoxov test jer su pretpostavke normalnosti narušene.
+
+
+```{r fig.height=3.5, fig.width=5, echo=FALSE, include=FALSE}
+wilcox.test(growth_1years, blend_1years, alternative = "greater")
+wilcox.test(growth_1years, value_1years, alternative = "greater")
+wilcox.test(blend_1years, value_1years, alternative = "greater")
+
+
+wilcox.test(growth_3years, blend_3years, alternative = "greater")
+wilcox.test(growth_3years, value_3years, alternative = "greater")
+wilcox.test(blend_3years, value_3years, alternative = "greater")
+
+wilcox.test(growth_5years, blend_5years, alternative = "greater")
+wilcox.test(growth_5years, value_5years, alternative = "greater")
+wilcox.test(blend_5years, value_5years, alternative = "greater")
+```
+
+```{r fig.height=3.5, fig.width=5, echo=FALSE}
+wilcox.test(growth_10years, blend_10years, alternative = "greater")
+wilcox.test(growth_10years, value_10years, alternative = "greater")
+wilcox.test(blend_10years, value_10years, alternative = "greater")
+```
+
+Na temelju testova možemo zaključiti sljedeće:
+Growth investiranje daje najbolje povrate za 1, 3, 5 i 10-godišnje podatke. Sljedeći je Bland način investiranja,te naposljetku Value.
+
+
+## Povrat fondova ovisno o stilu investiranja kada uzmemo rizik u obzir
+Utvrdili smo koji stil investiranja je najbolji ako uzmemo u obzir samo povrat fondova. Međutim, tada zanemarujemo rizik koji određeni stil investiranja donosi sa sobom.
+Sada ćemo testirati povrat fonda ako uzmemo u obzir i rizik. Varijabla koju ćemo koristiti je sharp ratio jer ona dosta dobro prikazuje povrat fonda naspram rizika. Sharp ratio je omjer povrata fonda i standardne devijacije.
+
+Podaci na kojima ćemo provoditi testove su sharp ratio za 3, 5 i 10 godina.
+Ovdje ćemo također prikazivati grafičke prikaze samo za 10-godišnje podatke.
+
+
+```{r echo=FALSE, include=FALSE}
+growth_3years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_sharpe_ratio_3years))
+value_3years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_sharpe_ratio_3years))
+blend_3years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_sharpe_ratio_3years))
+
+growth_5years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_sharpe_ratio_5years))
+value_5years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_sharpe_ratio_5years))
+blend_5years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_sharpe_ratio_5years))
+
+growth_10years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_sharpe_ratio_10years))
+value_10years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Value",]$fund_sharpe_ratio_10years))
+blend_10years_sharp <- c(na.omit(mutual_funds[mutual_funds$investment == "Blend",]$fund_sharpe_ratio_10years))
+
+summary(growth_3years_sharp)
+summary(value_3years_sharp)
+summary(blend_3years_sharp)
+
+summary(growth_5years_sharp)
+summary(value_5years_sharp)
+summary(blend_5years_sharp)
+
+summary(growth_10years_sharp)
+summary(value_10years_sharp)
+summary(blend_10years_sharp)
+```
+
+```{r echo=FALSE, include=FALSE}
+boxplot(growth_3years_sharp, value_3years_sharp, blend_3years_sharp,
+        names = c('Growth 3 god','Value 3 god', 'Blend 3 god'),
+        main='3-o godišnji sharp ratio')
+
+boxplot(growth_5years_sharp, value_5years_sharp, blend_5years_sharp,
+        names = c('Growth 5 god','Value 5 god', 'Blend 5 god'),
+        main='5-o godišnji sharp ratio')
+```
+
+```{r echo=FALSE}
+boxplot(growth_10years_sharp, value_10years_sharp, blend_10years_sharp,
+        names = c('Growth 10 god','Value 10 god', 'Blend 10 god'),
+        main='10-o godišnji sharp ratio')
+```
+
+
+Prvo testiramo jednakost sharp ratio-a fondova Kruskal-Wallis-ovim testom, ovaj test koristimo jer je narušena pretpostavka normalnosti.
+
+```{r echo=FALSE}
+kruskal.test(fund_sharpe_ratio_3years ~ investment, data=mutual_funds[mutual_funds$investment != "<undefined>",])
+kruskal.test(fund_sharpe_ratio_5years ~ investment, data=mutual_funds[mutual_funds$investment != "<undefined>",])
+kruskal.test(fund_sharpe_ratio_10years ~ investment, data=mutual_funds[mutual_funds$investment != "<undefined>",])
+```
+Zaključujemo da postoji razlika u sharp ratio-u fondova s obzirom na stil investiranja koji koriste, međutim ne znamo koje se točno srednje vrijednosti  međusobno razlikuju.
+
+Sada ćemo testirati koji stil investiranja ima najbolji sharp ratio, te kako se oni međusobno razlikuju.
+
+
+```{r echo=FALSE, include=FALSE}
+hist(growth_3years_sharp,
+     breaks = 20,
+    main = 'Histogram povrata Growth 3',
+    xlab = 'Povrat u %',
+    col='red')
+hist(blend_3years_sharp,
+     breaks = 20,
+     main = 'Histogram povrata Blend 3',
+     xlab = 'Povrat u %',
+     col='red')
+
+hist(value_3years_sharp,
+     breaks = 20,
+     main = 'Histogram povrata Value 3',
+     xlab = 'Povrat u %',
+     col='red')
+
+hist(growth_5years_sharp,
+     breaks = 20,
+    main = 'Histogram povrata Growth 5',
+    xlab = 'Povrat u %',
+    col='red')
+hist(blend_5years_sharp,
+     breaks = 20,
+     main = 'Histogram povrata Blend 5',
+     xlab = 'Povrat u %',
+     col='red')
+
+hist(value_5years_sharp,
+     breaks = 20,
+     main = 'Histogram povrata Value 5',
+     xlab = 'Povrat u %',
+     col='red')
+
+hist(growth_10years_sharp,
+     breaks = 20,
+    main = 'Histogram povrata Growth 10',
+    xlab = 'Povrat u %',
+    col='red')
+hist(blend_10years_sharp,
+     breaks = 20,
+     main = 'Histogram povrata Blend 10',
+     xlab = 'Povrat u %',
+     col='red')
+
+hist(value_10years_sharp,
+     breaks = 20,
+     main = 'Histogram povrata Value 10',
+     xlab = 'Povrat u %',
+     col='red')
+```
+
+```{r echo=FALSE, include=FALSE}
+qqnorm(growth_3years_sharp,pch=1,frame=FALSE,main='Growth 3')
+qqline(growth_3years_sharp,col='steelblue',lwd=2)
+qqnorm(blend_3years_sharp,pch=1,frame=FALSE,main='Blend 3')
+qqline(blend_3years_sharp,col='steelblue',lwd=2)
+qqnorm(value_3years_sharp,pch=1,frame=FALSE,main='Value 3')
+qqline(value_3years_sharp,col='steelblue',lwd=2)
+require(nortest)
+lillie.test(growth_3years_sharp)
+lillie.test(blend_3years_sharp)
+lillie.test(value_3years_sharp)
+
+qqnorm(growth_5years_sharp,pch=1,frame=FALSE,main='Growth 5')
+qqline(growth_5years_sharp,col='steelblue',lwd=2)
+qqnorm(blend_5years_sharp,pch=1,frame=FALSE,main='Blend 5')
+qqline(blend_5years_sharp,col='steelblue',lwd=2)
+qqnorm(value_5years_sharp,pch=1,frame=FALSE,main='Value 5')
+qqline(value_5years_sharp,col='steelblue',lwd=2)
+require(nortest)
+lillie.test(growth_5years_sharp)
+lillie.test(blend_5years_sharp)
+lillie.test(value_5years_sharp)
+
+qqnorm(growth_10years_sharp,pch=1,frame=FALSE,main='Growth 10')
+qqline(growth_10years_sharp,col='steelblue',lwd=2)
+qqnorm(blend_10years_sharp,pch=1,frame=FALSE,main='Blend 10')
+qqline(blend_10years_sharp,col='steelblue',lwd=2)
+qqnorm(value_10years_sharp,pch=1,frame=FALSE,main='Value 10')
+qqline(value_10years_sharp,col='steelblue',lwd=2)
+require(nortest)
+lillie.test(growth_10years_sharp)
+lillie.test(blend_10years_sharp)
+lillie.test(value_10years_sharp)
+```
+
+Koristimo Mann-Whitney-Wilcoxov test jer su pretpostavke normalnosti narušene.
+
+
+```{r fig.height=3.5, fig.width=5, echo=FALSE, include=FALSE}
+print('Growth Blend 3')
+wilcox.test(growth_3years_sharp, blend_3years_sharp, alternative = "greater")
+print('Growth Value 3')
+wilcox.test(growth_3years_sharp, value_3years_sharp, alternative = "greater")
+print('Blend Value 3')
+wilcox.test(blend_3years_sharp, value_3years_sharp, alternative = "greater")
+
+print('Growth Blend 5')
+wilcox.test(growth_5years_sharp, blend_5years_sharp, alternative = "greater")
+print('Growth Value 5')
+wilcox.test(growth_5years_sharp, value_5years_sharp, alternative = "greater")
+print('Blend Value 5')
+wilcox.test(blend_5years_sharp, value_5years_sharp, alternative = "greater")
+```
+
+```{r fig.height=3.5, fig.width=5, echo=FALSE}
+print('Growth Blend 10')
+wilcox.test(growth_10years_sharp, blend_10years_sharp, alternative = "greater")
+print('Growth Value 10')
+wilcox.test(growth_10years_sharp, value_10years_sharp, alternative = "greater")
+print('Blend Value 10')
+wilcox.test(blend_10years_sharp, value_10years_sharp, alternative = "greater")
+
+
+```
+Na temelju p-vrijednosti danih testova zaključujemo sljedeće:
+
+Growth je ostao najbolji stil investiranja kada gledamo sharp ratio fondova, a jedina razlika je to što je 10-godišnji sharp ratio za Value i Blend strategiju jednak
+
+## Je li veličina firmi u koje fond investira neovisna o tome koji stil investiranja  fond koristi
+
+Sada kad smo ustanovili koji stil investiranja je najbolji, želimo vidjeti postoji li zavisnost između veličine firmi u koje fond investira i stilu investiranja koji koristi fond.
+
+Veličine firme koje se pojavljuju u podacima su sljedeće:
+```{r echo=FALSE}
+table(mutual_funds$size)
+
+```
+
+Undefined podatke nećemo koristiti, te nam onda preostaje 3 varijable: Large, Medium i Small
+
+Kopiranje podataka kako ne bi promijenili prave vrijednosti
+```{r fig.height=3.5, fig.width=5, echo=FALSE, include=FALSE}
+
+mutual_funds_copy = data.frame(mutual_funds)
+tracemem(mutual_funds)==tracemem(mutual_funds_copy)
+untracemem(mutual_funds_copy)
+untracemem(mutual_funds_copy)
+mutual_funds_copy['investment'] <- sapply(mutual_funds_copy['investment'], as.character)
+mutual_funds_copy['size'] <- sapply(mutual_funds_copy['size'], as.character)
+```
+
+
+Napravimo kontingencijsku tablicu i dodamo sume redaka i stupaca.
+
+```{r fig.height=3.5, fig.width=5, echo=FALSE, include=FALSE}
+
+tbl = table(mutual_funds_copy[mutual_funds_copy$investment == 'Blend' 
+                      | mutual_funds_copy$investment == 'Growth' 
+                      | mutual_funds_copy$investment == 'Value',]$investment, 
+            mutual_funds_copy[mutual_funds_copy$investment == 'Blend' 
+                      | mutual_funds_copy$investment == 'Growth' 
+                      | mutual_funds_copy$investment == 'Value',]$size)
+tbl
+```
+
+```{r fig.height=3.5, fig.width=5, echo=FALSE}
+added_margins_tbl = addmargins(tbl)
+print(added_margins_tbl)
+```
+
+
+Provjerimo jesu li zadovoljene pretpostavke testa, a pretpostavke su da očekivana frekvencija pojedinog razreda mora biti veća ili jednaka 5.
+
+```{r, echo=FALSE}
+
+for (col_names in colnames(added_margins_tbl)){
+  for (row_names in rownames(added_margins_tbl)){
+    if (!(row_names == 'Sum' | col_names == 'Sum') ){
+      cat('Očekivane frekvencije za razred ',col_names,'-',row_names,': ',(added_margins_tbl[row_names,'Sum'] * added_margins_tbl['Sum',col_names]) / added_margins_tbl['Sum','Sum'],'\n')
+    }
+  }
+}
+```
+
+Pretpostavke su zadovoljene, pa možemo provesti test.
+
+
+```{r echo=FALSE}
+chisq.test(tbl,correct=F)
+```
+Na temelju male p-vrijednosti zaključujemo da je veličina firmi u koju fond ulaže zavisna o stilu investiranja koje fond koristi.
+
+
+## Kategorije fondova
+
+U nastavku ćemo promatrati kategorije fondova. Pogledat ćemo uspijevaju li fondovi pobijediti kategoriju u smislu povrata.
+Nakon toga ćemo podijeliti dataset u dva dijela. Za prvi dio ćemo uzeti fondove koji uspijevaju pobijediti svoju kategoriju, a za drugi dio one koji ne uspijevaju.
+
+```{r echo=FALSE, include=FALSE}
+head(mutual_funds)
+```
+
+```{r echo=FALSE, include=FALSE}
+levels(mutual_funds$category)
+```
+
+Pogledajmo grafički prikaz broja fondova u svakoj kategoriji.
+
+```{r echo=FALSE, include=FALSE}
+#library(dplyr)
+
+cats = table(mutual_funds$category)
+cats = as.data.frame(cats)
+cats
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+library(ggplot2)
+
+ggplot(mutual_funds, aes(category)) + geom_bar(fill = "#0073C2FF") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+Pogledajmo prosječnu vrijednost povrata fondova naspram kategorije kojoj oni pripadaju za povrat od 10 godina.
+
+```{r echo=FALSE}
+cat_ytd = do.call(data.frame, aggregate(cbind(fund_return_10years, category_return_10years)~category, mutual_funds, FUN = function(x) c(Mean = mean(x))))
+
+plot(cat_ytd$fund_return_10years,type = "o",col = "blue", xlab = "Kategorije", ylab = "Povrat", 
+   main = "")
+
+lines(cat_ytd$category_return_10years, type = "o", col = "red")
+
+legend(x = "topleft", y=0.85, legend = c("Fondovi", "Kategorije"), col = c("blue", "red"), pch=c("-","-"))
+
+```
+
+Promotrimo kako se ponašaju podaci unutar nekih od kategorija. Kako bi imali što bolju reprezentaciju, promatrat ćemo kategorije s najviše fondova "Large Growth", "Large Value", "Mid-Cap Growth", "Small Blend" i "Small Growth". Pogledajmo njihove boxplotove i distribuciju:
+
+```{r echo=FALSE}
+
+cats = c("Large Growth", "Large Value", "Mid-Cap Growth", "Small Blend", "Small Growth")
+
+boxplot(mutual_funds[mutual_funds$category == "Large Growth",]$fund_return_10years, boxfill = NA, border = NA,  main='Povrat fondova 10 godina', names=c(""))
+i = 1
+for (c in cats) {
+  jedna = mutual_funds[mutual_funds$category == c, ]
+  
+  boxplot(jedna$fund_return_10years,
+          xaxt = "n", add = TRUE, boxfill="#0073C2FF", xlab="",
+          boxwex=0.3, at= i * 0.2 + 0.4)
+  mtext(c, side = 1, at= i * 0.2 + 0.4)
+  
+  i = i + 1
+}
+```
+
+```{r echo=FALSE, include=FALSE}
+
+for (c in cats) {
+  jedna = mutual_funds[mutual_funds$category == c, ]
+  h = hist(jedna$fund_return_10years,
+         breaks=50,
+         main=c,
+         xlab="Povrat",
+         ylab='Frequency',
+         col="#0073C2FF"
+         ) 
+}
+```
+
+
+```{r echo=FALSE, include=FALSE}
+for (c in cats) {
+  jedna = mutual_funds[mutual_funds$category == c, ]
+  
+  qqnorm(jedna$fund_return_10years, pch = 1, frame = FALSE,main=c)
+  qqline(jedna$fund_return_10years, col = "steelblue", lwd = 2)
+}
+```
+
+
+
+```{r echo=FALSE, include=FALSE}
+cats = table(mutual_funds$category)
+cats = as.data.frame(cats)
+to_remove = cats[cats$Freq < 30,]
+cats = cats[cats$Freq >= 30,]
+cats
+
+cat_funds = mutual_funds
+
+for (c in to_remove$Var1) {
+  cat_funds = cat_funds[cat_funds$category != c, ]
+}
+```
+
+Pogledajmo u kojim kategorijama fondovi najviše pobjeđuju.
+Iskoristit ćemo t-test za svaku kategoriju i prikazati postotak fondova koji su prošli test.
+Gledamo  je li stvarna srednja vrijednost povrata fondova u 10 godina drugačija od povrata kategorije u 10 godina.
+Pretpostavka $H_0$ je da fondovi ne pobjeđuju kategorije, tj. mean(fund_return_10years) < category_return_10years.
+```{r echo=FALSE}
+testovi = data.frame()
+
+for (c in unique(cat_funds$category)) {
+  d = cat_funds[cat_funds$category == c, ]
+  
+  y10 = t.test(d$fund_return_10years, mu = mean(d$category_return_10years), alternative="greater")$p.value
+  
+  row = data.frame(category=c, p10years=y10)
+  
+  testovi = rbind(testovi, row)
+}
+
+testovi
+
+y10t = testovi[testovi$p10years < 0.05,]
+```
+
+```{r echo=FALSE, include=FALSE}
+p = nrow(y10t) / nrow(testovi) * 100
+cat("Procenat fondova koji pobjedjuju kategoriju", p)
+```
+Analizirali smo svaku kategoriju zasebno i dobili smo da u 12.5% fondovi pobjeđuju svoju kategoriju.
+
+## Usporedba fondova koji pobjeđuju kategoriju naspram onih koji to ne uspijevaju
+
+Podijelit ćemo fondove u dvije kategorije, one koji pobjeđuju svoju kategoriju i one koji to ne uspijevaju za povrate u 10 godina.
+
+```{r echo=FALSE, include=FALSE}
+manji = cat_funds[cat_funds$fund_return_10years < cat_funds$category_return_10years, ]
+veci = cat_funds[cat_funds$fund_return_10years > cat_funds$category_return_10years, ]
+dim(manji)
+dim(veci)
+```
+
+Prikažimo grafički broj fondova za fondove koji uspijevaju pobijediti svoju kategoriju, i one koji ne uspijevaju.
+
+```{r echo=FALSE, include=FALSE}
+cats = table(veci$category)
+cats = as.data.frame(cats)
+cats
+```
+
+```{r echo=FALSE}
+ggplot(veci, aes(category)) + geom_bar(fill = "#0073C2FF") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + ggtitle("Fondovi koji pobjeđuju kategoriju")
+
+```
+```{r echo=FALSE, include=FALSE}
+cats = table(manji$category)
+cats = as.data.frame(cats)
+cats
+```
+```{r echo=FALSE}
+ggplot(manji, aes(category)) + geom_bar(fill = "#0073C2FF") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + ggtitle("Fondovi koji ne pobjeđuju kategoriju")
+```
+
+
+
+```{r echo=FALSE, include=FALSE}
+library(dplyr)
+veci = select(veci, c("category", "net_assets", "fund_yield", "morningstar_rating", "inception_date", "investment", "size", "currency", "portfolio_cash", "portfolio_stocks", "portfolio_preferred", "fund_return_10years", "category_return_10years"))
+manji = select(manji, c("category", "net_assets", "fund_yield", "morningstar_rating", "inception_date", "investment", "size", "currency", "portfolio_cash", "portfolio_stocks", "portfolio_preferred", "fund_return_10years", "category_return_10years"))
+
+veci$relative_return = (veci$fund_return_10years - veci$category_return_10years)
+manji$relative_return = (manji$fund_return_10years - manji$category_return_10years)
+
+summary(veci)
+summary(manji)
+```
+
+
+```{r echo=FALSE, include=FALSE}
+h = hist(veci$relative_return,
+         breaks=100,
+         main="Povrati iz svih fondova koji pobjedjuju svoju kategoriju",
+         xlab="povrat",
+         ylab='Frequency',
+         col="#0073C2FF"
+         )
+
+qqnorm(veci$relative_return, pch = 1, frame = FALSE,main="Povrati iz svih fondova koji pobjedjuju svoju kategoriju")
+qqline(veci$relative_return, col = "steelblue", lwd = 2)
+
+h = hist(manji$relative_return,
+         breaks=100,
+         main="Povrati iz svih fondova koji ne pobjedjuju svoju kategoriju",
+         xlab="povrat",
+         ylab='Frequency',
+         col="#0073C2FF"
+         )
+
+qqnorm(manji$relative_return, pch = 1, frame = FALSE,main="Povrati iz svih fondova koji ne pobjedjuju svoju kategoriju")
+qqline(manji$relative_return, col = "steelblue", lwd = 2)
+
+boxplot(veci$relative_return, manji$relative_return, 
+        names = c('Pobjedjuju','Ne pobjedjuju'),
+        col = "#0073C2FF",
+        main='Boxplot fondova zavisno da li pobjedjuju ili ne svoju kategoriju')
+```
+
+Testirajmo ima li odabrana strategija utjecaj na to hoće li fond pobijediti svoju kategoriju.
+
+Pogledajmo kontingencijsku tablicu.
+
+```{r echo=FALSE}
+veci['investment'] <- sapply(veci['investment'], as.character);
+manji['investment'] <- sapply(manji['investment'], as.character);
+
+veci_invest = table(veci[veci$investment=="Blend" | veci$investment=="Growth" | veci$investment=="Value",]$investment)
+manji_invest = table(manji[manji$investment=="Blend" | manji$investment=="Growth" | manji$investment=="Value",]$investment)
+tbl = rbind(veci_invest, manji_invest)
+
+added_margins_tbl = addmargins(tbl)
+print(added_margins_tbl)
+```
+Da bi izvršili test, frekvencija za svaki razred nam mora biti veća ili jednaka 5.
+
+```{r echo=FALSE}
+for (col_names in colnames(added_margins_tbl)){
+  for (row_names in rownames(added_margins_tbl)){
+    if (!(row_names == 'Sum' | col_names == 'Sum') ){
+      cat('Očekivane frekvencije za razred ',col_names,'-',row_names,': ',(added_margins_tbl[row_names,'Sum'] * added_margins_tbl['Sum',col_names]) / added_margins_tbl['Sum','Sum'],'\n')
+    }
+  }
+}
+```
+Sve očekivane frekvencije su veće od 5, možemo nastaviti s izvršavanjem testa.
+
+```{r echo=FALSE}
+chisq.test(tbl,correct=F)
+```
+Vidimo da nam odabrana strategija govori koji fond pobjeđuje kategoriju.
+
+
+
+Grafički pregled Morningstar ratinga između fondova koji pobjeđuju i ne pobjeđuju svoju kategoriju. Morningstar je rating nekog fonda zasnovan na velikom broju faktora. Njegova vrijednost ide od 5 (najveće) do 1 (najmanje) vrijednosti. Morningstar je veoma važna metrika uspješnosti fonda.
+
+```{r echo=FALSE}
+v = veci[veci$morningstar_rating > 0, ]
+m = manji[manji$morningstar_rating > 0, ]
+h = hist(v$morningstar_rating,
+         breaks=seq(min(v$morningstar_rating),max(v$morningstar_rating),1),
+         main="Morningstar rating iz svih fondova koji pobjeđuju svoju kategoriju",
+         xlab="povrat",
+         ylab='Frequency',
+         col="#0073C2FF"
+         )
+
+h = hist(m$morningstar_rating,
+         breaks=seq(min(m$morningstar_rating),max(m$morningstar_rating),1),
+         main="Morningstar rating iz svih fondova koji ne pobjeđuju svoju kategoriju",
+         xlab="povrat",
+         ylab='Frequency',
+         col="#0073C2FF"
+         )
+```
+
+Prema gore odrađenom grafu, možemo primijetiti da postoji velika razlika između Morningstar ratinga. Ovdje koristimo t-test. Gledamo je li srednja vrijednost Morningstar ratinga kod fonova koji pobjeđuju svoju kategoriju veća od onih koji ne uspijevaju pobijediti.
+
+$H_0$ Morningstar rating fondova koji pobjeđuju svoju kategoriju nije veći od onih koji ne pobjeđuju svoju kategoriju.
+
+```{r echo=FALSE}
+t.test(v$morningstar_rating, m$morningstar_rating, alt = "greater")
+```
+Vidimo da naša inicijalna pretpostavka nije bila točna, tj. alternativna hipoteza je točna. Fondovi s većim Morningstar rating generalno pobjeđuju svoje kategorije više nego oni s manjim.
+
+
+## Uspješnost fondova
+
+Sljedeći korak našeg istraživanja bio je odrediti "uspješnost" fondova.
+
+```{r include=FALSE}
+mutual_funds = select(mutual_funds,c("fund_name","category","net_annual_expense_ratio_fund","net_annual_expense_ratio_category","fund_return_10years","category_return_10years","morningstar_rating","net_assets", "investment", "price_earnings"))
+dim(mutual_funds)
+```
+Prije početka rada potrebno je pregledati kako se ponašaju varijable koje smo izabrali.
+
+
+```{r}
+summary(mutual_funds)
+cat('\n')
+sapply(mutual_funds,class)
+```
+Vidimo da se atributi većinski sastoje od "numeric", "integer" i "character" podatka. Posebno je zanimljiv atribut "morningstar_rating". On predstavlja rejting agencije "Morningstar" i može biti u rasponu vrijednosti od 1 do 5. Budući da možemo primijetiti da pojedini fondovi imaju rating 0, te fondove ćemo izostaviti iz daljnje analize. Osim toga, atribut "morningstar_rating" koristit ćemo kao kategorijsku varijablu te je pretvaramo iz tipa "integer" u "factor".
+
+```{r}
+mutual_funds$morningstar_rating = as.factor(mutual_funds$morningstar_rating)
+mutual_funds[mutual_funds$morningstar_rating==0,]
+mutual_funds <- subset(mutual_funds, mutual_funds$morningstar_rating != 0)
+```
+
+Nakon što smo izbacili fondove s nevaljanim rejtingom, kojih na sreću nije bilo puno, potrebno je pregledati preostale atribute svih fondova te potencijalno izbaciti fondove koji ne posjeduju podatke o atributima važnim za našu analizu.
+```{r}
+imaNedostajucih = 0;
+for (col_name in names(mutual_funds)){
+  if (sum(is.na(mutual_funds[,col_name])) > 0){
+    cat('Ukupno nedostajućih vrijednosti za varijablu ',col_name, ': ', sum(is.na(mutual_funds[,col_name])),'\n')
+    imaNedostajucih = 1;
+  } 
+}
+
+if(!imaNedostajucih) {
+  cat("Nema nedostajucih podataka")
+}
+
+```
+Vidimo da postoje dva fonda koji nemaju definiranu varijablu net_assets. Budući da izbacivanje takvog malog broja fondova neće znatno utjecati na našu statistiku, to možemo napraviti.
+
+```{r}
+mutual_funds <- subset(mutual_funds, is.na(mutual_funds$net_assets) == 0)
+dim(mutual_funds)
+```
+Kako bismo dobili bolji uvid u podatke s kojima radimo, prikazat ćemo ih grafički. Pritom ćemo definirati novi atribut "success" kao razliku između prosječnog povrata fonda u zadnjih 10 godina i prosječnog povrata svih fondova u toj kategoriji. Tu mjeru koristit ćemo za većinu daljnje analize, te nam je ponašanje tog atributa posebno zanimljivo.
+```{r, fig.width = 14, fig.height=5}
+hist(mutual_funds$net_assets, main="Net assets [%]", xlab="Net assets", ylab="Count")
+hist(mutual_funds$net_annual_expense_ratio_fund,main='Net annual expense ratio fund[%]', xlab='Expense ratio', ylab='Count')
+hist(mutual_funds$net_annual_expense_ratio_category,main='Net annual expense ratio of category[%]', xlab='Expense ratio', ylab='Count')
+hist(mutual_funds$fund_return_10years,main='Fund return in 10 years[%]', xlab='Return', ylab='Count')
+hist(mutual_funds$category_return_10years,main='Category return in 10 years[%]', xlab='Return', ylab='Count')
+mutual_funds <- mutual_funds %>% mutate(success = fund_return_10years - category_return_10years)
+hist(mutual_funds$success,probability=T,main='Rate of success[%]', xlab='Success', ylab='Count',breaks = 20)
+
+```
+
+Kao i za numeričke podatke, deskriptivnu statistiku napravit ćemo i nad kategorijskim podatkom "morningstar_rating".
+
+```{r, fig.width = 14, fig.height=5}
+barplot(summary(mutual_funds$morningstar_rating),main='Morningstar rating')
+```
+
+```{r, fig.width = 14, fig.height=5, include=FALSE}
+mutual_funds_outliers <- mutual_funds
+Q <- quantile(mutual_funds$success, probs=c(.25, .75), na.rm = FALSE)
+iqr <- IQR(mutual_funds$success)
+mutual_funds <- subset(mutual_funds, mutual_funds$success > (Q[1] - 1.5*iqr) & mutual_funds$success < (Q[2]+1.5*iqr))
+
+```
+
+
+```{r, fig.width = 14, fig.height=5, include=FALSE}
+hist(mutual_funds$net_annual_expense_ratio_fund,main='Net annual expense ratio fund[%]', xlab='Expense ratio', ylab='Frequency')
+hist(mutual_funds$net_annual_expense_ratio_category,main='Net annual expense ratio of category[%]', xlab='Expense ratio', ylab='Frequency')
+hist(mutual_funds$fund_return_10years,main='Fund return in 10 years[%]', xlab='Return', ylab='Frequency')
+hist(mutual_funds$category_return_10years,main='Category return in 10 years[%]', xlab='Return', ylab='Frequency')
+hist(mutual_funds$success,probability=T,main='Rate of success[%]', xlab='Success', ylab='Frequency',breaks = 20)
+lines(density(mutual_funds$success),col=2)
+barplot(summary(mutual_funds$morningstar_rating),main='Morningstar rating')
+dim(mutual_funds)
+
+```
+
+Kao što je već spomenuto, naše istraživanje bavit će se uspjehom pojedinih fondova. Specifično, u sljedećem koraku istraživanja zanima nas jesu li skuplji fondovi uspješniji od jeftinijih te vrijedi li ista ta tvrdnja i za veće i manje fondove. Stoga ćemo fondove podijeliti na skuplje, ako im je godišnji postotni trošak upravljanja veći od prosječnog godišnjeg postotnog troška fondova u toj kategoriji, te na jeftinije, ako je godišnji postotni trošak manji ili jednak. Na sličan način, fondovi će biti veći ako im je ukupna imovina pod upravljanje veća od medijana podataka, a manji ako vrijedi suprotno. U istom koraku napravit ćemo pregled pojedinih skupova podataka.
+
+```{r, fig.width = 14, fig.height=5, include=FALSE}
+mutual_funds_expensive = mutual_funds[mutual_funds$net_annual_expense_ratio_fund > mutual_funds$net_annual_expense_ratio_category,]
+mutual_funds_cheap = mutual_funds[mutual_funds$net_annual_expense_ratio_fund <= mutual_funds$net_annual_expense_ratio_category,]
+summary(mutual_funds_expensive)
+cat("\n")
+summary(mutual_funds_cheap)
+cat("\n")
+```
+
+```{r}
+mutual_funds_outliers_expensive = mutual_funds_outliers[mutual_funds_outliers$net_annual_expense_ratio_fund > mutual_funds_outliers$net_annual_expense_ratio_category,]
+mutual_funds_outliers_cheap = mutual_funds_outliers[mutual_funds_outliers$net_annual_expense_ratio_fund <= mutual_funds_outliers$net_annual_expense_ratio_category,]
+
+median <- median(mutual_funds_outliers$net_assets)
+mutual_funds_large <- mutual_funds_outliers[mutual_funds_outliers$net_assets > median,]
+mutual_funds_small <- mutual_funds_outliers[mutual_funds_outliers$net_assets <= median,]
+
+summary(mutual_funds_large)
+cat("\n")
+cat("\n")
+summary(mutual_funds_small)
+cat("\n")
+cat("\n")
+summary(mutual_funds_outliers_expensive)
+cat("\n")
+cat("\n")
+summary(mutual_funds_outliers_cheap)
+
+```
+
+Već iz inicijalnog pregleda dobivenih podataka možemo dobiti generalnu ideju o tome koji će skup podataka biti uspješniji. To možemo vidjeti i ako usporedimo srednje vrijednosti uspjeha dobivenih skupova te modova njihovih rejtinga.
+
+```{r, include=FALSE}
+cat('Prosječni uspjeh skupljih fondova bez outliera iznosi  ', mean(mutual_funds_expensive$success),'\n')
+cat('Prosječni uspjeh jeftinijih fondova bez outliera iznosi  ', mean(mutual_funds_cheap$success),'\n')
+```
+
+```{r}
+cat('Prosječni uspjeh skupljih fondova iznosi  ', mean(mutual_funds_outliers_expensive$success),'\n')
+cat('Prosječni uspjeh jeftinijih fondova iznosi  ', mean(mutual_funds_outliers_cheap$success),'\n')
+require(modeest)
+cat('Prosječni rating skupljih fondova iznosi  ', mfv1(mutual_funds_expensive$morningstar_rating),'\n')
+cat('Prosječni rating jeftinijih fondova iznosi  ', mfv1(mutual_funds_cheap$morningstar_rating),'\n')
+
+cat('Prosječni izračunati uspjeh većih fondova iznosi  ', mean(mutual_funds_large$success),'\n')
+cat('Prosječni izračunati uspjeh manjih fondova iznosi  ', mean(mutual_funds_small$success),'\n')
+cat('Prosječni morningstar rating većih fondova iznosi  ', mfv(mutual_funds_large$morningstar_rating),'\n')
+cat('Prosječni morningstar rating manjih fondova iznosi  ', mfv(mutual_funds_small$morningstar_rating),'\n')
+
+```
+Inicijalnom procjenom podataka mogli bi zaključiti da će jeftiniji fondovi biti uspješniji od skupljih te da će veći fondovi biti uspješniji od manjih. Kako bi još lakše mogli analizirati podatke, prikazat ćemo ih i grafički pomoću box-plotova i histograma.
+```{r}
+boxplot(mutual_funds_outliers_expensive$success, mutual_funds_outliers_cheap$success, 
+        names = c('Expensive fund success','Cheap fund success'),
+        main='Boxplot of expensive and cheap fund success rate')
+
+hist(mutual_funds_outliers_expensive$success,
+     breaks = 20,
+     main='Histogram of rate of success of expensive funds',
+     xlab='Success rate')
+
+hist(mutual_funds_outliers_cheap$success, 
+     main='Histogram of rate of success of cheap funds',
+     xlab='Success rate')
+
+boxplot(mutual_funds_large$success, mutual_funds_small$success,
+        names = c('Large fund success','Small fund success'),
+        main='Boxplot of large and small fund success rate')
+
+hist(mutual_funds_large$success,
+     breaks = 20,
+     main='Histogram of rate of success of large funds',
+     xlab='Success rate')
+
+hist(mutual_funds_small$success,
+     main='Histogram of rate of success of small funds',
+     xlab='Success rate')
+
+```
+
+```{r include=FALSE}
+boxplot(mutual_funds_expensive$success, mutual_funds_cheap$success, 
+        names = c('Expensive fund success','Cheap fund success'),
+        main='Boxplot of expensive and cheap fund success rate without outliers')
+
+hist(mutual_funds_expensive$success,
+     breaks = 20,
+     main='Histogram of rate of success of expensive funds without outliers',
+     xlab='Success rate')
+
+hist(mutual_funds_cheap$success, 
+     main='Histogram of rate of success of cheap funds without outliers',
+     xlab='Success rate')
+```
+Iz grafičkih podataka još bolje možemo zaključiti da se jeftiniji i veći fondovi na prvi pogled čine uspješnijima. Sada je potrebno odrediti jesu li te razlike statistički značajne. Kako bismo mogli odrediti koje statističke testove koristiti, prvo je potrebno ispitati normalnost dobivenih podataka. To ćemo ispitati upotrebom qq plotova te upotrebom Lillieforsove inačice Kolmogorov-Smirnovljevog testa. Bitno je napomenuti i prisutnost velikog broja stršećih vrijednosti. Uzevši u obzir kontekst podataka s kojima baratamo, odlučili smo takve vrijednosti zadržati u analizi, budući da su nam takve vrijednosti posebno zanimljive. 
+
+
+
+```{r include=FALSE}
+qqnorm(mutual_funds_expensive$success, pch = 1, frame = FALSE,main='Expensive funds')
+qqline(mutual_funds_expensive$success, col = "steelblue", lwd = 2)
+
+qqnorm(mutual_funds_cheap$success, pch = 1, frame = FALSE,main='Cheap funds')
+qqline(mutual_funds_cheap$success, col = "steelblue", lwd = 2)
+
+lillie.test(mutual_funds$success)
+```
+
+```{r}
+qqnorm(mutual_funds_outliers$success, pch = 1, frame = FALSE,main='Success of all funds')
+qqline(mutual_funds_outliers$success, col = "steelblue", lwd = 2)
+
+qqnorm(mutual_funds_outliers_expensive$success, pch = 1, frame = FALSE,main='Expensive funds with outliers')
+qqline(mutual_funds_outliers_expensive$success, col = "steelblue", lwd = 2)
+
+qqnorm(mutual_funds_outliers_cheap$success, pch = 1, frame = FALSE,main='Cheap funds with outliers')
+qqline(mutual_funds_outliers_cheap$success, col = "steelblue", lwd = 2)
+
+require(nortest)
+
+
+qqnorm(mutual_funds_large$success, pch = 1, frame = FALSE,main='Large funds')
+qqline(mutual_funds_large$success, col = "steelblue", lwd = 2)
+
+qqnorm(mutual_funds_small$success, pch = 1, frame = FALSE,main='Small funds')
+qqline(mutual_funds_small$success, col = "steelblue", lwd = 2)
+
+lillie.test(mutual_funds_outliers$success)
+```
+Iz rezultata je vidljivo da se dobivene distribucije značajno razlikuju od normalne.Stoga nećemo koristiti t-test kako bismo usporedili srednje vrijednosti tih skupova, nego ćemo koristiti njegovu neparametarsku inačicu, tj. Mann-Whitney-Wilcoxov test.   
+
+```{r include=FALSE}
+
+#Provjeravamo varijance
+
+
+var(mutual_funds_expensive$success)
+var(mutual_funds_cheap$success)
+
+#Uspoređujemo jednakost varijanci
+
+
+var.test(mutual_funds_expensive$success, mutual_funds_cheap$success)
+
+
+#Odbijamo pretpostavku H_0 da su varijance jednake. Koristimo t-test
+
+
+t.test(mutual_funds_cheap$success, mutual_funds_expensive$success, alt = "greater", var.equal = FALSE)
+
+
+#Možemo reći da su jeftiniji fondovi u prosjeku uspješniji. 
+
+wilcox.test(mutual_funds_cheap$success, mutual_funds_expensive$success, alternative = "greater")
+```
+
+```{r}
+wilcox.test(mutual_funds_outliers_cheap$success, mutual_funds_outliers_expensive$success, alternative = "greater")
+wilcox.test(mutual_funds_large$success, mutual_funds_small$success, alternative = "greater")
+```
+Iz dobivenog rezultata možemo očitati vrlo malu p-vrijednost, što nam govori da možemo odbaciti hipotezu H0 u korist H1. Drugim riječima, možemo reći da su jeftiniji fondovi u prosjeku uspješniji.
+
+
+Varijabla "morningstar_rating" služit će nam kao druga mjera uspjeha fondova. Stoga ćemo analizirati i te podatke za sve skupove
+
+```{r, include=FALSE}
+
+cat("Prikaz rejtinga svih fondova\n")
+table(mutual_funds_outliers$morningstar_rating)
+cat("\nPrikaz rejtinga skupljih fondova\n")
+table(mutual_funds_outliers_expensive$morningstar_rating)
+cat("\nPrikaz rejtinga jeftinijh fondova\n")
+table(mutual_funds_outliers_cheap$morningstar_rating)
+
+expensive_rating <- table(mutual_funds_outliers_expensive$morningstar_rating)
+cheap_rating <-table(mutual_funds_outliers_cheap$morningstar_rating)
+
+cat("\nPrikaz frekvencija rejtinga skupljih fondova\n")
+round(prop.table(expensive_rating),digits=2)
+cat("\nPrikaz frekvencija rejtinga jeftinijh fondova\n")
+round(prop.table(cheap_rating),digits=2)
+
+cat("\nPrikaz rejtinga većih fondova\n")
+table(mutual_funds_large$morningstar_rating)
+cat("\nPrikaz  rejtinga manjih fondova\n")
+table(mutual_funds_small$morningstar_rating)
+
+large_rating <- table(mutual_funds_large$morningstar_rating)
+small_rating <-table(mutual_funds_small$morningstar_rating)
+cat("\nPrikaz frekvencija rejtinga većih fondova\n")
+round(prop.table(large_rating),digits=3)
+cat("\nPrikaz frekvencija rejtinga manjih fondova\n")
+round(prop.table(small_rating),digits=3)
+```
+
+```{r, fig.width = 14, fig.height=5}
+barplot(summary(mutual_funds_outliers_expensive$morningstar_rating),main='Morningstar rating for expensive funds')
+barplot(summary(mutual_funds_outliers_cheap$morningstar_rating),main='Morningstar rating for cheap funds')
+
+barplot(prop.table(expensive_rating), xlab='Rating',ylab='Frequency',main="Morningstar rating distribution of expensive funds",ylim=range(pretty(c(0,prop.table(expensive_rating)))))
+
+barplot(prop.table(cheap_rating), xlab='Rating',ylab='Frequency',main="Morningstar rating distribution of cheap funds",ylim=range(pretty(c(0,prop.table(cheap_rating)))))
+
+barplot(summary(mutual_funds_large$morningstar_rating),main='Morningstar rating for large funds')
+barplot(summary(mutual_funds_small$morningstar_rating),main='Morningstar rating for small funds')
+
+barplot(prop.table(large_rating), xlab='Rating',ylab='Frequency',main="Morningstar rating distribution of large funds",ylim=range(pretty(c(0,prop.table(large_rating)))))
+
+barplot(prop.table(small_rating), xlab='Rating',ylab='Frequency',main="Morningstar rating distribution of small funds",ylim=range(pretty(c(0,prop.table(small_rating)))))
+```
+
+Iz podataka je vidljivo da jeftiniji fondovi imaju veći udio bolje rangiranih fondova. Ista pretpostavka vrijedi i za veće fondove. Te pretpostavke provjerit ćemo tako da usporedimo proporcije visoko rangiranih fondova (s rejtingom 4 ili 5) skupova. Za to nam može poslužiti test proporcija s dvije varijable. 
+
+```{r}
+expensive_high_ratings = expensive_rating[["4"]][1] + expensive_rating[["5"]][1]
+expensive_collective = expensive_rating[["1"]][1] + expensive_rating[["2"]][1] + expensive_rating[["3"]][1] + expensive_rating[["4"]][1] + expensive_rating[["5"]][1]
+cat("Broj visoko rangiranih skupljih fondova:")
+expensive_high_ratings
+cat("Broj svih skupljih fondova:")
+expensive_collective
+
+
+cheap_high_ratings = cheap_rating[["4"]][1] + cheap_rating[["5"]][1]
+cheap_collective = cheap_rating[["1"]][1] + cheap_rating[["2"]][1] + cheap_rating[["3"]][1] + cheap_rating[["4"]][1] + cheap_rating[["5"]][1]
+cat("Broj visoko rangiranih jeftinijih fondova:")
+cheap_high_ratings
+cat("Broj svih jeftinijih fondova:")
+cheap_collective
+
+rating_proportions <- c(cheap_high_ratings,expensive_high_ratings)
+rating_sum <- c(cheap_collective,expensive_collective)
+prop.test(rating_proportions,rating_sum, alt="greater")
+cat("\n-----------------------------------------------------------------------\n")
+
+large_high_ratings <- large_rating[["4"]][1] + large_rating[["5"]][1]
+large_collective <- large_rating[["1"]][1] + large_rating[["2"]][1] + large_rating[["3"]][1] + large_rating[["4"]][1] + large_rating[["5"]][1]
+cat("Broj visoko rangiranih većih fondova:")
+large_high_ratings
+cat("Broj svih većih fondova:")
+large_collective
+
+small_high_ratings <- small_rating[["4"]][1] + small_rating[["5"]][1]
+small_collective <- small_rating[["1"]][1] + small_rating[["2"]][1] + small_rating[["3"]][1] + small_rating[["4"]][1] + small_rating[["5"]][1]
+cat("Broj visoko rangiranih manjih fondova:")
+small_high_ratings
+cat("Broj svih manjih fondova:")
+small_collective
+
+rating_proportions <- c(large_high_ratings,small_high_ratings)
+rating_sum <- c(large_collective,small_collective)
+prop.test(rating_proportions,rating_sum, alt="greater")
+```
+
+Male p vrijednosti govore nam da možemo odbaciti hipotezu H_0 u oba slučaja, tj. možemo zaključiti da jeftiniji fondovi imaju veću proporciju visoko rangiranih fondova od skupljih te da isto vrijedi za veće i manje fondove. Ti rezultati poklapaju se i s rezultatima dobivenim gledanjem atributa "success". Na taj način imamo dvije mjere uspjeha koje daju iste rezultate, što daje veću potporu valjanosti naših metoda.
+
+##Pronalazak regresijskog modela
+
+Sljedeće pitanje koje nam se postavlja je to utječu li trošak fonda i njegova veličina direktno na uspjeh fonda. Iz tog razloga želimo istražiti možemo li izgraditi regresijski model koji podržava tu tvrdnju. U prvom koraku te analize pokušat ćemo izgraditi modele jednostavne regresije koristeći prosječni godišnji trošak i ukupnu imovinu pod upravljanje kao nezavisne varijable, te uspjeh fonda kao zavisnu varijablu. Kako bi dobili bolji uvid na način na koji te varijable utječu na uspjeh, koristit ćemo se scatter plotom.
+
+```{r scatter plots}
+
+plot(mutual_funds_outliers$net_annual_expense_ratio_fund,mutual_funds_outliers$success)
+plot(mutual_funds_outliers$net_assets, mutual_funds_outliers$success)
+```
+
+Gledajući dobiveni graf, na prvi pogled bi mogli zaključiti da postoji određeni utjecaj troška na uspjeh. Iz tog razloga gradimo jednostavni regresijski model koji uzima prosječni godišnji trošak kao nezavisnu varijablu, a uspjeh kao zavisnu. Količina imovine ne daje nam neke očite naznake, ali ćemo probati i za nju izgraditi model.
+
+```{r regresija}
+fit.expense = lm(success~net_annual_expense_ratio_fund, data = mutual_funds_outliers)
+
+plot(mutual_funds_outliers$net_annual_expense_ratio_fund,mutual_funds_outliers$success)
+lines(mutual_funds_outliers$net_annual_expense_ratio_fund,fit.expense$fitted.values,col='red')
+
+fit.size <- lm(success~net_assets, data=mutual_funds_bySize)
+
+plot(mutual_funds_bySize$net_assets, mutual_funds_bySize$success)
+lines(mutual_funds_bySize$net_assets, fit.size$fitted.values, col='red')
+```
+
+Dobiveni nagib pravca potvrđuje tvrdnju o utjecaju troška, no kako bi mogli nastaviti analizu modela, potrebno je ispitati pretpostavke modela, tj. normalnost reziduala i homogenost varijance. Sličan slučaj vrijedi i za veličinu
+
+Prvo analiziramo normalnost reziduala pomoću histograma, qq plotova i Lillieforsove inačice Kolmogorov-Smirnovljevog testa.
+
+```{r res}
+
+selected.model = fit.expense
+
+
+#q-q plot reziduala s linijom normalne distribucije
+qqnorm(rstandard(selected.model))
+qqline(rstandard(selected.model))
+
+plot(selected.model$fitted.values,selected.model$residuals) #reziduale je dobro prikazati u ovisnosti o procjenama modela
+
+
+#KS test na normalnost 
+ks.test(rstandard(fit.expense),'pnorm')
+
+require(nortest)
+lillie.test(rstandard(fit.expense))
+
+summary(fit.expense)
+
+cat("\n--------------------------------------------------------------------------------\n")
+
+selected.model <- fit.size
+
+#q-q plot reziduala s linijom normalne distribucije
+qqnorm(rstandard(selected.model))
+qqline(rstandard(selected.model))
+
+plot(selected.model$fitted.values,selected.model$residuals) #reziduale je dobro prikazati u ovisnosti o procjenama modela
+
+#KS test na normalnost
+ks.test(rstandard(fit.size),'pnorm')
+
+require(nortest)
+lillie.test(rstandard(fit.size))
+
+summary(fit.size)
+```
+Iz rezultata vidimo da ne vrijedi pretpostavka o normalnosti reziduala. To nas sprječava da radimo daljnju analizu linearne regresije. Osim toga, ako promotrimo dobivenu $R^2$ vrijednost, možemo vidjeti da je ona vrlo mala, što znači da naš model ni u kojem slučaju ne bi predstavljao veći dio podataka.
+
+Slične zaključke kao i za trošak fonda dobili smo analizom ukupne imovine pod upravljanjem fondova. Stoga smo pokušali napraviti i model regresije s te dvije varijable. Pritom je nužno utvrditi da one nisu međusobno jako korelirane.
+
+```{r cor}
+
+cor(mutual_funds_outliers$net_annual_expense_ratio_fund,mutual_funds_outliers$net_assets)
+
+```
+
+Budući da je korelacija između varijabli mala, možemo nastaviti s postupkom višestruke regresije, pritom koristeći sličan postupak kao za linearnu regresiju
+
+```{r visestruka regresija}
+fit.multi = lm(success ~ net_annual_expense_ratio_fund + net_assets, mutual_funds_outliers)
+
+selected.model = fit.multi
+
+
+
+#q-q plot reziduala s linijom normalne distribucije
+qqnorm(rstandard(selected.model))
+qqline(rstandard(selected.model))
+
+plot(selected.model$fitted.values,selected.model$residuals) #reziduale je dobro prikazati u ovisnosti o procjenama modela
+
+
+#KS test na normalnost 
+ks.test(rstandard(fit.multi),'pnorm')
+
+require(nortest)
+lillie.test(rstandard(fit.multi))
+
+summary(fit.multi)
+
+```
+
+Iz rezultata vidimo da ni reziduali kod višestruke regresije nisu normalno distribuirani i da je $R^2$ još uvijek mali, pa stoga i ovaj model regresije možemo odbaciti
+
+
+U potrazi za varijablama koje bi mogle utjecati na uspjeh, ispitali smo i regresijski model između stila investiranja i uspjeha, no ni taj proces nije dao značajne rezultate.
+
+
+```{r kategorijske ulazne varijable - sirove}
+
+boxplot(success~investment,data=mutual_funds_outliers) #kvadratni dijagram se moze koristiti za graficki provjeriti linearnost efekta kategorijske varijable na neku izlaznu varijablu
+
+
+
+fit.investment = lm(success ~ investment, mutual_funds_outliers)
+lillie.test(rstandard(fit.investment))
+
+require(fastDummies)
+mutual_funds_outliers_dummies = dummy_cols(mutual_funds_outliers,select_columns='investment')
+
+
+#procjena modela s dummy varijablama
+
+
+fit.investment.dummy = lm(success ~ net_annual_expense_ratio_fund + net_assets + investment_Blend + investment_Growth + investment_Value, mutual_funds_outliers_dummies)
+
+qqnorm(rstandard(fit.investment.dummy))
+qqline(rstandard(fit.investment.dummy))
+
+lillie.test(rstandard(fit.investment.dummy))
+summary(fit.investment.dummy)
+
+```
+
+Konačnu varijablu koju smo ispitali je P/E omjer, tj. omjer trenutačne tržišne cijene i zarada po dionici prethodne godine.Međutim, ni taj pokušaj nije urodio plodom.
+
+```{r regresija 2}
+fit.pe = lm(success~price_earnings, data = mutual_funds_outliers)
+
+plot(mutual_funds_outliers$price_earnings,mutual_funds_outliers$success)
+lines(mutual_funds_outliers$price_earnings,fit.pe$fitted.values,col='red')
+
+#q-q plot reziduala s linijom normalne distribucije
+qqnorm(rstandard(selected.model))
+qqline(rstandard(selected.model))
+
+plot(selected.model$fitted.values,selected.model$residuals) #reziduale je dobro prikazati u ovisnosti o procjenama modela
+
+
+#KS test na normalnost 
+ks.test(rstandard(fit.pe),'pnorm')
+
+require(nortest)
+lillie.test(rstandard(fit.pe))
+
+summary(fit.pe)
+```
+Slične rezultate dobili smo ponovnim pokušajem višestruke regresije s novim dodanim parametrom.
+
+```{r visestruka regresija opet}
+cor(cbind(mutual_funds_outliers$net_annual_expense_ratio_fund, mutual_funds_outliers$net_assets, mutual_funds_outliers$price_earnings))
+
+fit.multi = lm(success ~ net_annual_expense_ratio_fund + price_earnings + net_assets, mutual_funds_outliers)
+
+selected.model = fit.multi
+
+
+#q-q plot reziduala s linijom normalne distribucije
+qqnorm(rstandard(selected.model))
+qqline(rstandard(selected.model))
+
+plot(selected.model$fitted.values,selected.model$residuals) #reziduale je dobro prikazati u ovisnosti o procjenama modela
+
+
+#KS test na normalnost 
+ks.test(rstandard(fit.multi),'pnorm')
+
+require(nortest)
+lillie.test(rstandard(fit.multi))
+
+summary(fit.multi)
+
+```
+##Zaključak
+
+U konačnici, ispitivanjem raznih dostupnih varijabli nismo uspjeli pronaći model koji zadovoljava sve pretpostavke regresije i koji bi mogao dobro opisati dobivene podatke.Iako se naše testiranje na prvi pogled čini uzaludnim, to nam zapravo govori da je određivanje faktora koji čine fond uspješnim složen postupak. Da smo uspjeli pronaći jednu takvu jednostavnu regresiju, to bi nam reklo da bi u praksi odabir uspješnog fonda bio puno jednostavniji nego što uistinu je. Za kraj, trebalo bi uzeti u obzir da vjerojatno postoji još faktora koje nismo uzeli u obzir tijekom istraživanja. Razlog tomu je ograničenost podataka kojima smo baratali, a i potencijalna složenost baratanja takvim varijablama koja nadilazi naše iskustvo. Iz tog razloga, iako su rezultati dobiveni u ovom radu zanimljivi, trebali bi se koristit ne kao činjenice, već kao poziv na detaljnije istraživanje i razradu problema kojima smo se bavili. 
