@@ -925,21 +925,21 @@ dim(mutual_funds)
 Prije početka rada potrebno je pregledati kako se ponašaju varijable koje smo izabrali.
 
 
-```{r}
+```{r echo=FALSE, include=FALSE}
 summary(mutual_funds)
 cat('\n')
 sapply(mutual_funds,class)
 ```
 Vidimo da se atributi većinski sastoje od "numeric", "integer" i "character" podatka. Posebno je zanimljiv atribut "morningstar_rating". On predstavlja rejting agencije "Morningstar" i može biti u rasponu vrijednosti od 1 do 5. Budući da možemo primijetiti da pojedini fondovi imaju rating 0, te fondove ćemo izostaviti iz daljnje analize. Osim toga, atribut "morningstar_rating" koristit ćemo kao kategorijsku varijablu te je pretvaramo iz tipa "integer" u "factor".
 
-```{r}
+```{r echo=FALSE}
 mutual_funds$morningstar_rating = as.factor(mutual_funds$morningstar_rating)
 mutual_funds[mutual_funds$morningstar_rating==0,]
 mutual_funds <- subset(mutual_funds, mutual_funds$morningstar_rating != 0)
 ```
 
 Nakon što smo izbacili fondove s nevaljanim rejtingom, kojih na sreću nije bilo puno, potrebno je pregledati preostale atribute svih fondova te potencijalno izbaciti fondove koji ne posjeduju podatke o atributima važnim za našu analizu.
-```{r}
+```{r, echo=FALSE}
 imaNedostajucih = 0;
 for (col_name in names(mutual_funds)){
   if (sum(is.na(mutual_funds[,col_name])) > 0){
@@ -955,12 +955,12 @@ if(!imaNedostajucih) {
 ```
 Vidimo da postoje dva fonda koji nemaju definiranu varijablu net_assets. Budući da izbacivanje takvog malog broja fondova neće znatno utjecati na našu statistiku, to možemo napraviti.
 
-```{r}
+```{r echo=FALSE, include=FALSE}
 mutual_funds <- subset(mutual_funds, is.na(mutual_funds$net_assets) == 0)
 dim(mutual_funds)
 ```
 Kako bismo dobili bolji uvid u podatke s kojima radimo, prikazat ćemo ih grafički. Pritom ćemo definirati novi atribut "success" kao razliku između prosječnog povrata fonda u zadnjih 10 godina i prosječnog povrata svih fondova u toj kategoriji. Tu mjeru koristit ćemo za većinu daljnje analize, te nam je ponašanje tog atributa posebno zanimljivo.
-```{r, fig.width = 14, fig.height=5}
+```{r, fig.width = 14, fig.height=5, echo=FALSE}
 hist(mutual_funds$net_assets, main="Net assets [%]", xlab="Net assets", ylab="Count")
 hist(mutual_funds$net_annual_expense_ratio_fund,main='Net annual expense ratio fund[%]', xlab='Expense ratio', ylab='Count')
 hist(mutual_funds$net_annual_expense_ratio_category,main='Net annual expense ratio of category[%]', xlab='Expense ratio', ylab='Count')
@@ -973,7 +973,7 @@ hist(mutual_funds$success,probability=T,main='Rate of success[%]', xlab='Success
 
 Kao i za numeričke podatke, deskriptivnu statistiku napravit ćemo i nad kategorijskim podatkom "morningstar_rating".
 
-```{r, fig.width = 14, fig.height=5}
+```{r, fig.width = 14, fig.height=5, echo=FALSE}
 barplot(summary(mutual_funds$morningstar_rating),main='Morningstar rating')
 ```
 
@@ -1009,7 +1009,7 @@ summary(mutual_funds_cheap)
 cat("\n")
 ```
 
-```{r}
+```{r echo=FALSE, include=FALSE}
 mutual_funds_outliers_expensive = mutual_funds_outliers[mutual_funds_outliers$net_annual_expense_ratio_fund > mutual_funds_outliers$net_annual_expense_ratio_category,]
 mutual_funds_outliers_cheap = mutual_funds_outliers[mutual_funds_outliers$net_annual_expense_ratio_fund <= mutual_funds_outliers$net_annual_expense_ratio_category,]
 
@@ -1037,7 +1037,7 @@ cat('Prosječni uspjeh skupljih fondova bez outliera iznosi  ', mean(mutual_fund
 cat('Prosječni uspjeh jeftinijih fondova bez outliera iznosi  ', mean(mutual_funds_cheap$success),'\n')
 ```
 
-```{r}
+```{r echo=FALSE, include=FALSE}
 cat('Prosječni uspjeh skupljih fondova iznosi  ', mean(mutual_funds_outliers_expensive$success),'\n')
 cat('Prosječni uspjeh jeftinijih fondova iznosi  ', mean(mutual_funds_outliers_cheap$success),'\n')
 require(modeest)
@@ -1051,7 +1051,7 @@ cat('Prosječni morningstar rating manjih fondova iznosi  ', mfv(mutual_funds_sm
 
 ```
 Inicijalnom procjenom podataka mogli bi zaključiti da će jeftiniji fondovi biti uspješniji od skupljih te da će veći fondovi biti uspješniji od manjih. Kako bi još lakše mogli analizirati podatke, prikazat ćemo ih i grafički pomoću box-plotova i histograma.
-```{r}
+```{r, echo=FALSE}
 boxplot(mutual_funds_outliers_expensive$success, mutual_funds_outliers_cheap$success, 
         names = c('Expensive fund success','Cheap fund success'),
         main='Boxplot of expensive and cheap fund success rate')
@@ -1108,17 +1108,21 @@ qqline(mutual_funds_cheap$success, col = "steelblue", lwd = 2)
 lillie.test(mutual_funds$success)
 ```
 
-```{r}
+```{r echo=FALSE}
 qqnorm(mutual_funds_outliers$success, pch = 1, frame = FALSE,main='Success of all funds')
 qqline(mutual_funds_outliers$success, col = "steelblue", lwd = 2)
 
+require(nortest)
+
+lillie.test(mutual_funds_outliers$success)
+```
+
+```{r echo=FALSE, include=FALSE}
 qqnorm(mutual_funds_outliers_expensive$success, pch = 1, frame = FALSE,main='Expensive funds with outliers')
 qqline(mutual_funds_outliers_expensive$success, col = "steelblue", lwd = 2)
 
 qqnorm(mutual_funds_outliers_cheap$success, pch = 1, frame = FALSE,main='Cheap funds with outliers')
 qqline(mutual_funds_outliers_cheap$success, col = "steelblue", lwd = 2)
-
-require(nortest)
 
 
 qqnorm(mutual_funds_large$success, pch = 1, frame = FALSE,main='Large funds')
@@ -1126,8 +1130,6 @@ qqline(mutual_funds_large$success, col = "steelblue", lwd = 2)
 
 qqnorm(mutual_funds_small$success, pch = 1, frame = FALSE,main='Small funds')
 qqline(mutual_funds_small$success, col = "steelblue", lwd = 2)
-
-lillie.test(mutual_funds_outliers$success)
 ```
 Iz rezultata je vidljivo da se dobivene distribucije značajno razlikuju od normalne.Stoga nećemo koristiti t-test kako bismo usporedili srednje vrijednosti tih skupova, nego ćemo koristiti njegovu neparametarsku inačicu, tj. Mann-Whitney-Wilcoxov test.   
 
@@ -1156,7 +1158,7 @@ t.test(mutual_funds_cheap$success, mutual_funds_expensive$success, alt = "greate
 wilcox.test(mutual_funds_cheap$success, mutual_funds_expensive$success, alternative = "greater")
 ```
 
-```{r}
+```{r, echo=FALSE}
 wilcox.test(mutual_funds_outliers_cheap$success, mutual_funds_outliers_expensive$success, alternative = "greater")
 wilcox.test(mutual_funds_large$success, mutual_funds_small$success, alternative = "greater")
 ```
@@ -1195,16 +1197,18 @@ cat("\nPrikaz frekvencija rejtinga manjih fondova\n")
 round(prop.table(small_rating),digits=3)
 ```
 
-```{r, fig.width = 14, fig.height=5}
+```{r, echo=FALSE}
 barplot(summary(mutual_funds_outliers_expensive$morningstar_rating),main='Morningstar rating for expensive funds')
 barplot(summary(mutual_funds_outliers_cheap$morningstar_rating),main='Morningstar rating for cheap funds')
 
+barplot(summary(mutual_funds_large$morningstar_rating),main='Morningstar rating for large funds')
+barplot(summary(mutual_funds_small$morningstar_rating),main='Morningstar rating for small funds')
+```
+
+```{r, fig.width = 14, fig.height=5, echo=FALSE, include=FALSE}
 barplot(prop.table(expensive_rating), xlab='Rating',ylab='Frequency',main="Morningstar rating distribution of expensive funds",ylim=range(pretty(c(0,prop.table(expensive_rating)))))
 
 barplot(prop.table(cheap_rating), xlab='Rating',ylab='Frequency',main="Morningstar rating distribution of cheap funds",ylim=range(pretty(c(0,prop.table(cheap_rating)))))
-
-barplot(summary(mutual_funds_large$morningstar_rating),main='Morningstar rating for large funds')
-barplot(summary(mutual_funds_small$morningstar_rating),main='Morningstar rating for small funds')
 
 barplot(prop.table(large_rating), xlab='Rating',ylab='Frequency',main="Morningstar rating distribution of large funds",ylim=range(pretty(c(0,prop.table(large_rating)))))
 
@@ -1213,7 +1217,7 @@ barplot(prop.table(small_rating), xlab='Rating',ylab='Frequency',main="Morningst
 
 Iz podataka je vidljivo da jeftiniji fondovi imaju veći udio bolje rangiranih fondova. Ista pretpostavka vrijedi i za veće fondove. Te pretpostavke provjerit ćemo tako da usporedimo proporcije visoko rangiranih fondova (s rejtingom 4 ili 5) skupova. Za to nam može poslužiti test proporcija s dvije varijable. 
 
-```{r}
+```{r, echo=FALSE, include=FALSE}
 expensive_high_ratings = expensive_rating[["4"]][1] + expensive_rating[["5"]][1]
 expensive_collective = expensive_rating[["1"]][1] + expensive_rating[["2"]][1] + expensive_rating[["3"]][1] + expensive_rating[["4"]][1] + expensive_rating[["5"]][1]
 cat("Broj visoko rangiranih skupljih fondova:")
@@ -1231,7 +1235,13 @@ cheap_collective
 
 rating_proportions <- c(cheap_high_ratings,expensive_high_ratings)
 rating_sum <- c(cheap_collective,expensive_collective)
+```
+
+```{r echo=FALSE}
 prop.test(rating_proportions,rating_sum, alt="greater")
+```
+
+```{r echo=FALSE, include=FALSE}
 cat("\n-----------------------------------------------------------------------\n")
 
 large_high_ratings <- large_rating[["4"]][1] + large_rating[["5"]][1]
@@ -1250,6 +1260,9 @@ small_collective
 
 rating_proportions <- c(large_high_ratings,small_high_ratings)
 rating_sum <- c(large_collective,small_collective)
+```
+
+```{r echo=FALSE}
 prop.test(rating_proportions,rating_sum, alt="greater")
 ```
 
@@ -1259,7 +1272,7 @@ Male p vrijednosti govore nam da možemo odbaciti hipotezu H_0 u oba slučaja, t
 
 Sljedeće pitanje koje nam se postavlja je to utječu li trošak fonda i njegova veličina direktno na uspjeh fonda. Iz tog razloga želimo istražiti možemo li izgraditi regresijski model koji podržava tu tvrdnju. U prvom koraku te analize pokušat ćemo izgraditi modele jednostavne regresije koristeći prosječni godišnji trošak i ukupnu imovinu pod upravljanje kao nezavisne varijable, te uspjeh fonda kao zavisnu varijablu. Kako bi dobili bolji uvid na način na koji te varijable utječu na uspjeh, koristit ćemo se scatter plotom.
 
-```{r scatter plots}
+```{r scatter plots, echo=FALSE}
 
 plot(mutual_funds_outliers$net_annual_expense_ratio_fund,mutual_funds_outliers$success)
 plot(mutual_funds_outliers$net_assets, mutual_funds_outliers$success)
@@ -1267,23 +1280,23 @@ plot(mutual_funds_outliers$net_assets, mutual_funds_outliers$success)
 
 Gledajući dobiveni graf, na prvi pogled bi mogli zaključiti da postoji određeni utjecaj troška na uspjeh. Iz tog razloga gradimo jednostavni regresijski model koji uzima prosječni godišnji trošak kao nezavisnu varijablu, a uspjeh kao zavisnu. Količina imovine ne daje nam neke očite naznake, ali ćemo probati i za nju izgraditi model.
 
-```{r regresija}
+```{r regresija, echo=FALSE}
 fit.expense = lm(success~net_annual_expense_ratio_fund, data = mutual_funds_outliers)
 
 plot(mutual_funds_outliers$net_annual_expense_ratio_fund,mutual_funds_outliers$success)
 lines(mutual_funds_outliers$net_annual_expense_ratio_fund,fit.expense$fitted.values,col='red')
 
-fit.size <- lm(success~net_assets, data=mutual_funds_bySize)
+fit.size <- lm(success~net_assets, data=mutual_funds_outliers)
 
-plot(mutual_funds_bySize$net_assets, mutual_funds_bySize$success)
-lines(mutual_funds_bySize$net_assets, fit.size$fitted.values, col='red')
+plot(mutual_funds_outliers$net_assets, mutual_funds_outliers$success)
+lines(mutual_funds_outliers$net_assets, fit.size$fitted.values, col='red')
 ```
 
 Dobiveni nagib pravca potvrđuje tvrdnju o utjecaju troška, no kako bi mogli nastaviti analizu modela, potrebno je ispitati pretpostavke modela, tj. normalnost reziduala i homogenost varijance. Sličan slučaj vrijedi i za veličinu
 
 Prvo analiziramo normalnost reziduala pomoću histograma, qq plotova i Lillieforsove inačice Kolmogorov-Smirnovljevog testa.
 
-```{r res}
+```{r res, echo=FALSE}
 
 selected.model = fit.expense
 
@@ -1302,8 +1315,6 @@ require(nortest)
 lillie.test(rstandard(fit.expense))
 
 summary(fit.expense)
-
-cat("\n--------------------------------------------------------------------------------\n")
 
 selected.model <- fit.size
 
@@ -1325,7 +1336,7 @@ Iz rezultata vidimo da ne vrijedi pretpostavka o normalnosti reziduala. To nas s
 
 Slične zaključke kao i za trošak fonda dobili smo analizom ukupne imovine pod upravljanjem fondova. Stoga smo pokušali napraviti i model regresije s te dvije varijable. Pritom je nužno utvrditi da one nisu međusobno jako korelirane.
 
-```{r cor}
+```{r cor, echo=FALSE}
 
 cor(mutual_funds_outliers$net_annual_expense_ratio_fund,mutual_funds_outliers$net_assets)
 
@@ -1333,7 +1344,7 @@ cor(mutual_funds_outliers$net_annual_expense_ratio_fund,mutual_funds_outliers$ne
 
 Budući da je korelacija između varijabli mala, možemo nastaviti s postupkom višestruke regresije, pritom koristeći sličan postupak kao za linearnu regresiju
 
-```{r visestruka regresija}
+```{r visestruka regresija, echo=FALSE}
 fit.multi = lm(success ~ net_annual_expense_ratio_fund + net_assets, mutual_funds_outliers)
 
 selected.model = fit.multi
@@ -1363,7 +1374,7 @@ Iz rezultata vidimo da ni reziduali kod višestruke regresije nisu normalno dist
 U potrazi za varijablama koje bi mogle utjecati na uspjeh, ispitali smo i regresijski model između stila investiranja i uspjeha, no ni taj proces nije dao značajne rezultate.
 
 
-```{r kategorijske ulazne varijable - sirove}
+```{r kategorijske ulazne varijable - sirove, echo=FALSE}
 
 boxplot(success~investment,data=mutual_funds_outliers) #kvadratni dijagram se moze koristiti za graficki provjeriti linearnost efekta kategorijske varijable na neku izlaznu varijablu
 
@@ -1391,7 +1402,7 @@ summary(fit.investment.dummy)
 
 Konačnu varijablu koju smo ispitali je P/E omjer, tj. omjer trenutačne tržišne cijene i zarada po dionici prethodne godine.Međutim, ni taj pokušaj nije urodio plodom.
 
-```{r regresija 2}
+```{r regresija 2, echo=FALSE}
 fit.pe = lm(success~price_earnings, data = mutual_funds_outliers)
 
 plot(mutual_funds_outliers$price_earnings,mutual_funds_outliers$success)
@@ -1414,7 +1425,7 @@ summary(fit.pe)
 ```
 Slične rezultate dobili smo ponovnim pokušajem višestruke regresije s novim dodanim parametrom.
 
-```{r visestruka regresija opet}
+```{r visestruka regresija opet, echo=FALSE}
 cor(cbind(mutual_funds_outliers$net_annual_expense_ratio_fund, mutual_funds_outliers$net_assets, mutual_funds_outliers$price_earnings))
 
 fit.multi = lm(success ~ net_annual_expense_ratio_fund + price_earnings + net_assets, mutual_funds_outliers)
@@ -1438,6 +1449,6 @@ lillie.test(rstandard(fit.multi))
 summary(fit.multi)
 
 ```
-##Zaključak
+## Zaključak
 
 U konačnici, ispitivanjem raznih dostupnih varijabli nismo uspjeli pronaći model koji zadovoljava sve pretpostavke regresije i koji bi mogao dobro opisati dobivene podatke.Iako se naše testiranje na prvi pogled čini uzaludnim, to nam zapravo govori da je određivanje faktora koji čine fond uspješnim složen postupak. Da smo uspjeli pronaći jednu takvu jednostavnu regresiju, to bi nam reklo da bi u praksi odabir uspješnog fonda bio puno jednostavniji nego što uistinu je. Za kraj, trebalo bi uzeti u obzir da vjerojatno postoji još faktora koje nismo uzeli u obzir tijekom istraživanja. Razlog tomu je ograničenost podataka kojima smo baratali, a i potencijalna složenost baratanja takvim varijablama koja nadilazi naše iskustvo. Iz tog razloga, iako su rezultati dobiveni u ovom radu zanimljivi, trebali bi se koristit ne kao činjenice, već kao poziv na detaljnije istraživanje i razradu problema kojima smo se bavili. 
