@@ -11,20 +11,19 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Uvod
 
 
-## Učitavanje podataka
 ```{r fig.height=3.5, fig.width=5, echo=FALSE}
 mutual_funds <- read.csv("Dataset/mutual_funds.csv")
 ```
 
 
-## Stilovi investiranja
-Growth, value i blend su tri stila investiranja koje ćemo usporediti u ovom projektu.
+## Strategije investiranja
+Growth, value i blend su tri stila odnosno strategije investiranja koje ćemo usporediti u ovom projektu.
 Growth fondovi ulažu u dionice firmi za koje se predpostavlja veliki rast.
 Value fondovi investiraju u dionice čija je tržišna vrijednost ispod stvarne, odnosno u podcjenjene firme.
 Blend investiranje je investiranje u različite dionice iz istog razreda, npr. S&P500. Možemo ih smatrati kombinaciom value i growth investiranja.
 ```{r fig.height=5, fig.width=5, echo=FALSE}
 godine <- c(2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010)
-barplot(summary(mutual_funds$investment))
+barplot(summary(na.omit(mutual_funds$investment)))
 
 print('Growth')
 summary(mutual_funds[mutual_funds$investment == "Growth",]$ytd_return)
@@ -140,12 +139,13 @@ legend("topleft", legend=c("Value", "Growth","Blend"),
        col = c("red", "blue", "green"), lty = 1:2, box.lty=0)
 
 ```
-Kao što vidimo Growth je najučestalija strategija investiranja fondova iz ovog data-seta, te možemo vidjeti iz grafa da je za posljednje 3 godine Growth imao največu vrijednost srednjeg godišnjeg povrata.
+
+Kao što vidimo Growth je najučestalija strategija investiranja fondova iz ovog data-seta, te možemo vidjeti iz grafa da je za posljednje 3 godine Growth imao največu srednju vrijednost godišnjeg povrata.
 
 Kako bih saznali koji stil investiranja daje najbolje rezultate testirati čemo njihove povrate na temelju podataka 1-godišnjeg,
 3-godišnjeg, 5-godišnjeg i 10-godišnjeg povrata.
 
-## Testiranje
+## Testiranje jednakosti povrata fondova s obzirom na strategiju investiranja
 
 ```{r echo=FALSE, include=FALSE}
 growth_1years <- c(na.omit(mutual_funds[mutual_funds$investment == "Growth",]$fund_return_1year))
@@ -203,7 +203,7 @@ boxplot(growth_10years, value_10years, blend_10years,
 ```
 
 
-Prvo testiramo jednakos povrata strategija investiranja Kruskal-Wallis-ovim testom 
+Prvo testiramo jednakos povrata strategija investiranja Kruskal-Wallis-ovim testom. Ovaj neparametarski test koristimo umjesto ANOVA-e jer podaci nisu zadovoljili predpostavku normalnosti.
 
 ```{r echo=FALSE}
 kruskal.test(fund_return_1year ~ investment, data=mutual_funds[mutual_funds$investment != "<undefined>",])
@@ -216,8 +216,6 @@ Zaključujemo da postoji razlika u povratu fondova s obzirom na stil investiranj
 
 Sada čemo testirati koji stil investiranja ima največi povrat.
 
-
-Provjera normalnosti podataka
 ```{r include=FALSE, include=FALSE}
 hist(growth_1years,
      breaks = 20,
@@ -334,7 +332,7 @@ lillie.test(blend_10years)
 lillie.test(value_10years)
 ```
 
-Kooristimo neparametarski Mann-Whitney-Wilcoxov test jer su pretpostavke normalnosti narušene.
+Koristimo neparametarski Mann-Whitney-Wilcoxov test jer su pretpostavke normalnosti narušene.
 
 
 ```{r fig.height=3.5, fig.width=5, echo=FALSE, include=FALSE}
@@ -360,9 +358,10 @@ wilcox.test(blend_10years, value_10years, alternative = "greater")
 
 Na temelju testova možemo zaključiti sljedeće:
 Growth investiranje ima najveći povrat za sve testirane podatke, a sljedeći najbolji stil investiranja je blend.
+Growth investiranje daje najbolje povrate za 1, 3, 5 i 10-godišnje podatke, sljedeći je Bland način investiranja i naposljetku Value.
 
 
-## Povrat fondova ovisno o stilu investiranja ako uzmemo i rizik u obzir
+## Povrat fondova ovisno o stilu investiranja kada uzmemo rizik u obzir
 Utvrdili smo koji stil investiranja je najbolji ako uzmemo u obzir samo povrat fondova, međutim tada zanemarujemo rizik koji određeni stil investiranja donosi sa sebom.
 Sada čemo testirati povrat fonda ako uzmemo u obzir i rizik. Varijabla koju ćemo koristiti je sharp ratio jer ona dosta dobro prikazuje povrat fonda nasprem rizika. Sharp ratio je omjer povrata fonda i standardne devijacije
 
@@ -408,8 +407,9 @@ boxplot(growth_10years_sharp, value_10years_sharp, blend_10years_sharp,
         main='10-o godišnji sharp ratio')
 ```
 
+Podaci na kojima ćemo provoditi testove su sharp ratio za 3, 5 i 10 godina.
 
-Prvo testiramo jednakos sharp ratio-a fondova Kruskal-Wallis-ovim testom.
+Prvo testiramo jednakos sharp ratio-a fondova Kruskal-Wallis-ovim testom, ovaj test koristimo jer je narušena pretpostavka normalnosti.
 
 ```{r echo=FALSE}
 kruskal.test(fund_sharpe_ratio_3years ~ investment, data=mutual_funds[mutual_funds$investment != "<undefined>",])
@@ -585,7 +585,7 @@ print(added_margins_tbl)
 ```
 
 
-Provjerimo jesu li zadovoljene pretpostavke testa, a pretpostavke su da očeivana frekvencija pojedinog razreda mora biti veća ili jednaka 5
+Provjerimo jesu li zadovoljene pretpostavke testa, a pretpostavke su da očekivana frekvencija pojedinog razreda mora biti veća ili jednaka 5
 ```{r, echo=FALSE}
 
 for (col_names in colnames(added_margins_tbl)){
@@ -603,7 +603,7 @@ Pretpostavke su zadovoljene, možemo provesti test
 ```{r echo=FALSE}
 chisq.test(tbl,correct=F)
 ```
-Na temelju male p-vrijednoti odbacijemo hipotezu H0 i zaključujemo da je veličina firmi u koju fond ulaže zavosno o stilu investiranja koje fond koristi
+Na temelju male p-vrijednoti zaključujemo da je veličina firmi u koju fond ulaže zavisna o stilu investiranja koje fond koristi
 
 
 ## U nastavku ćemo promatrati kategorije fondova.
